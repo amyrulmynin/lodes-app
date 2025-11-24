@@ -7,12 +7,19 @@ import { OrdersManager } from "./orders-manager";
 import { WithdrawalsManager } from "./withdrawals-manager";
 import { AffiliatesManager } from "./affiliates-manager";
 import { PaymentSettings } from "./payment-settings";
+import { FinancialOverview } from "./financial-overview";
 
 export function AdminDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
 
+      {/* Financial Overview - Always visible at top */}
+      <div className="mb-8">
+        <FinancialOverview />
+      </div>
+
+      {/* Management Tabs */}
       <Tabs defaultValue="desserts" className="w-full">
         <TabsList className="grid w-full grid-cols-5 mb-8">
           <TabsTrigger value="desserts">Desserts</TabsTrigger>

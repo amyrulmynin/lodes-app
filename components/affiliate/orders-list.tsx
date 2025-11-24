@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 interface Order {
@@ -23,6 +25,8 @@ interface Order {
 export function OrdersList() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
 
   useEffect(() => {
     fetchOrders();
@@ -44,12 +48,33 @@ export function OrdersList() {
     return <div className="text-center py-8">Loading...</div>;
   }
 
+  // Pagination logic
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentOrders = orders.slice(startIndex, endIndex);
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">My Orders</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">My Orders</h2>
+        {orders.length > 0 && (
+          <p className="text-sm text-gray-600">
+            Total: {orders.length} order{orders.length !== 1 ? "s" : ""}
+          </p>
+        )}
+      </div>
 
       <div className="space-y-4">
-        {orders.map((order) => (
+        {currentOrders.map((order) => (
           <Card key={order.id}>
             <CardContent className="pt-6">
               <div className="flex justify-between items-start mb-4">
@@ -131,6 +156,40 @@ export function OrdersList() {
           </Card>
         )}
       </div>
+
+      {/* Pagination */}
+      {orders.length > itemsPerPage && (
+        <div className="flex items-center justify-between border-t pt-4">
+          <p className="text-sm text-gray-600">
+            Showing {startIndex + 1} to {Math.min(endIndex, orders.length)} of {orders.length}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <div className="flex items-center gap-2 px-3">
+              <span className="text-sm font-medium">
+                Page {currentPage} of {totalPages}
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

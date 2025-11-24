@@ -46,13 +46,29 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { amount, bankName, bankAccount, accountHolder } = body;
+    const { amount, withdrawalMethod, bankName, bankAccount, accountHolder, qrCodeUrl } = body;
 
-    if (!amount || !bankName || !bankAccount || !accountHolder) {
+    if (!amount || !withdrawalMethod) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
+    }
+
+    if (withdrawalMethod === "bank") {
+      if (!bankName || !bankAccount || !accountHolder) {
+        return NextResponse.json(
+          { error: "Bank details are required for bank transfer" },
+          { status: 400 }
+        );
+      }
+    } else if (withdrawalMethod === "qr") {
+      if (!qrCodeUrl) {
+        return NextResponse.json(
+          { error: "QR code image is required for QR payment" },
+          { status: 400 }
+        );
+      }
     }
 
     const amountNum = parseFloat(amount);
@@ -81,14 +97,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newWithdrawal = await db.insert(withdrawals).values({
+    const withdrawalData: any = {
       affiliateId: parseInt(session.user.id),
       amount: amount.toString(),
-      bankName,
-      bankAccount,
-      accountHolder,
+      withdrawalMethod,
       status: 'pending',
-    }).returning();
+    };
+
+    if (withdrawalMethod === "bank") {
+      withdrawalData.bankName = bankName;
+      withdrawalData.bankAccount = bankAccount;
+      withdrawalData.accountHolder = accountHolder;
+    } else if (withdrawalMethod === "qr") {
+      withdrawalData.qrCodeUrl = qrCodeUrl;
+    }
+
+    const newWithdrawal = await db.insert(withdrawals).values(withdrawalData).returning();
 
     return NextResponse.json(newWithdrawal[0], { status: 201 });
   } catch (error) {

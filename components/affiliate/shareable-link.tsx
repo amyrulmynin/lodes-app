@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Link2, Copy, Check, Share2, ExternalLink } from "lucide-react";
+import { Link2, Copy, Check, Share2, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ export function ShareableLink() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [shopUrl, setShopUrl] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -68,16 +69,30 @@ export function ShareableLink() {
 
   return (
     <Card className="border-2 border-primary-200 bg-gradient-to-br from-primary-50 to-white">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Link2 className="h-5 w-5 text-primary-600" />
-          Your Affiliate Shop Link
-        </CardTitle>
-        <p className="text-sm text-gray-600 mt-2">
-          Share this link with customers. When they order through your link, you automatically earn commission!
-        </p>
+      <CardHeader 
+        className="cursor-pointer hover:bg-primary-100/50 transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-5 w-5 text-primary-600" />
+            <CardTitle>Your Affiliate Shop Link</CardTitle>
+          </div>
+          {isOpen ? (
+            <ChevronUp className="h-5 w-5 text-primary-600" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-primary-600" />
+          )}
+        </div>
+        {!isOpen && (
+          <p className="text-sm text-gray-600 mt-2">
+            Click to view and share your unique shop link
+          </p>
+        )}
       </CardHeader>
-      <CardContent className="space-y-4">
+      
+      {isOpen && (
+        <CardContent className="space-y-4 animate-in slide-in-from-top-2 duration-200">
         <div className="bg-white border-2 border-primary-300 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
             <div className="flex-1">
@@ -149,7 +164,17 @@ export function ShareableLink() {
             <li>• Post in groups and communities</li>
           </ul>
         </div>
+        
+        <div className="text-center pt-2 border-t">
+          <button
+            onClick={() => setIsOpen(false)}
+            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+          >
+            Collapse
+          </button>
+        </div>
       </CardContent>
+      )}
     </Card>
   );
 }

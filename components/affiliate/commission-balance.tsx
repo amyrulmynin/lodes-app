@@ -53,10 +53,10 @@ export function CommissionBalance() {
             <p className="text-sm text-gray-600">Total Earned</p>
           </div>
           <p className="text-4xl font-bold text-gray-900">
-            {formatCurrency(profile?.commissionBalance || 0)}
+            {formatCurrency(profile?.totalEarned || 0)}
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            Keep submitting orders to earn more!
+            Including {formatCurrency(profile?.totalWithdrawn || 0)} withdrawn
           </p>
         </CardContent>
       </Card>

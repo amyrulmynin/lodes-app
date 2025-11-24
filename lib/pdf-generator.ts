@@ -3,9 +3,11 @@ import jsPDF from 'jspdf';
 interface WithdrawalData {
   id: number;
   amount: string;
-  bankName: string;
-  bankAccount: string;
-  accountHolder: string;
+  withdrawalMethod: string;
+  bankName?: string | null;
+  bankAccount?: string | null;
+  accountHolder?: string | null;
+  qrCodeUrl?: string | null;
   status: string;
   requestedAt: Date;
   notes?: string | null;
@@ -113,29 +115,50 @@ export function generateCommissionStatementPDF(
   
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
-  doc.text('BANK ACCOUNT DETAILS', 20, yPos);
   
-  yPos += 8;
-  doc.setFontSize(11);
-  doc.setTextColor(...darkGray);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Bank:', 20, yPos);
-  doc.setFont('helvetica', 'normal');
-  doc.text(withdrawal.bankName, 60, yPos);
-  
-  yPos += 7;
-  doc.setFont('helvetica', 'bold');
-  doc.text('Account No:', 20, yPos);
-  doc.setFont('helvetica', 'normal');
-  doc.text(withdrawal.bankAccount, 60, yPos);
-  
-  yPos += 7;
-  doc.setFont('helvetica', 'bold');
-  doc.text('Account Holder:', 20, yPos);
-  doc.setFont('helvetica', 'normal');
-  doc.text(withdrawal.accountHolder, 60, yPos);
-  
-  yPos += 15;
+  if (withdrawal.withdrawalMethod === 'qr') {
+    doc.text('PAYMENT METHOD', 20, yPos);
+    
+    yPos += 8;
+    doc.setFontSize(11);
+    doc.setTextColor(...darkGray);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Method:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text('QR Code E-Wallet', 60, yPos);
+    
+    yPos += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Payment will be made via QR code scan to affiliate e-wallet', 20, yPos);
+    
+    yPos += 15;
+  } else {
+    doc.text('BANK ACCOUNT DETAILS', 20, yPos);
+    
+    yPos += 8;
+    doc.setFontSize(11);
+    doc.setTextColor(...darkGray);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bank:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(withdrawal.bankName || 'N/A', 60, yPos);
+    
+    yPos += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Account No:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(withdrawal.bankAccount || 'N/A', 60, yPos);
+    
+    yPos += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Account Holder:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(withdrawal.accountHolder || 'N/A', 60, yPos);
+    
+    yPos += 15;
+  }
   
   let statusColor: [number, number, number];
   let statusText: string;

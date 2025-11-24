@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, QrCode, CreditCard, Download, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -9,9 +9,11 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 interface Withdrawal {
   id: number;
   amount: string;
-  bankName: string;
-  bankAccount: string;
-  accountHolder: string;
+  withdrawalMethod: string;
+  bankName: string | null;
+  bankAccount: string | null;
+  accountHolder: string | null;
+  qrCodeUrl: string | null;
   status: string;
   requestedAt: Date;
   notes: string | null;
@@ -26,6 +28,7 @@ export function WithdrawalsManager() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
+  const [viewingQr, setViewingQr] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWithdrawals();
@@ -74,6 +77,56 @@ export function WithdrawalsManager() {
 
   return (
     <div className="space-y-6">
+      {/* QR Code Modal */}
+      {viewingQr && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          onClick={() => setViewingQr(null)}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-lg w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <QrCode className="h-5 w-5 text-primary-600" />
+                QR Code E-Wallet
+              </h3>
+              <button
+                onClick={() => setViewingQr(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <img
+                src={viewingQr}
+                alt="QR Code Fullscreen"
+                className="w-full max-w-md mx-auto rounded border-2 border-gray-300"
+              />
+            </div>
+            <div className="mt-4 flex gap-2">
+              <a
+                href={viewingQr}
+                download="qr-code.png"
+                className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download QR Code
+              </a>
+              <Button
+                variant="outline"
+                onClick={() => setViewingQr(null)}
+                className="flex-1"
+              >
+                Tutup
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Manage Withdrawals</h2>
         <div className="flex gap-2">
@@ -142,21 +195,85 @@ export function WithdrawalsManager() {
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                <p className="text-sm font-medium text-gray-500 mb-2">Bank Details</p>
-                <div className="space-y-1">
-                  <p className="text-sm">
-                    <span className="font-medium">Bank:</span> {withdrawal.bankName}
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium">Account:</span> {withdrawal.bankAccount}
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium">Account Holder:</span>{" "}
-                    {withdrawal.accountHolder}
-                  </p>
+              {/* Withdrawal Method Badge */}
+              <div className="mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200">
+                  {withdrawal.withdrawalMethod === "qr" ? (
+                    <>
+                      <QrCode className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-blue-900">QR Code Payment</span>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-blue-900">Bank Transfer</span>
+                    </>
+                  )}
                 </div>
               </div>
+
+              {/* Bank Details */}
+              {withdrawal.withdrawalMethod === "bank" && withdrawal.bankName && (
+                <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                  <p className="text-sm font-medium text-gray-500 mb-2 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Bank Details
+                  </p>
+                  <div className="space-y-1">
+                    <p className="text-sm">
+                      <span className="font-medium">Bank:</span> {withdrawal.bankName}
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium">Account:</span> {withdrawal.bankAccount}
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium">Account Holder:</span>{" "}
+                      {withdrawal.accountHolder}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* QR Code Display */}
+              {withdrawal.withdrawalMethod === "qr" && withdrawal.qrCodeUrl && (
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-lg mb-4 border-2 border-blue-200">
+                  <div className="flex items-start justify-between mb-3">
+                    <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <QrCode className="h-5 w-5 text-blue-600" />
+                      QR Code E-Wallet Affiliate
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setViewingQr(withdrawal.qrCodeUrl)}
+                        className="text-xs"
+                      >
+                        <Maximize2 className="h-3 w-3 mr-1" />
+                        View Full
+                      </Button>
+                      <a
+                        href={withdrawal.qrCodeUrl}
+                        download={`qr-withdrawal-${withdrawal.id}.png`}
+                        className="inline-flex items-center px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100"
+                      >
+                        <Download className="h-3 w-3 mr-1" />
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 border-2 border-gray-200">
+                    <img
+                      src={withdrawal.qrCodeUrl}
+                      alt="QR Code"
+                      className="max-w-[200px] mx-auto rounded"
+                    />
+                    <p className="text-xs text-gray-500 text-center mt-2">
+                      Scan QR code ini untuk bayar ke e-wallet affiliate
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {withdrawal.notes && (
                 <div className="mb-4">
