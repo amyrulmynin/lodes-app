@@ -26,37 +26,54 @@ export function CommissionBalance() {
   };
 
   if (loading) {
-    return <div className="text-center py-4">Loading...</div>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="skeleton h-36" />
+        <div className="skeleton h-36" />
+      </div>
+    );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="bg-gradient-to-br from-primary-500 to-primary-600 text-white">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Wallet className="h-8 w-8" />
-            <p className="text-sm opacity-90">Commission Balance</p>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Featured balance card (brand) */}
+      <Card className="bg-ink-950 border-ink-950 text-white relative overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute -top-16 -right-16 h-44 w-44 rounded-full bg-primary-500/25 blur-2xl pointer-events-none"
+        />
+        <CardContent className="pt-6 relative">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500 text-ink-950">
+              <Wallet className="h-5 w-5" strokeWidth={2} />
+            </span>
+            <p className="text-sm font-medium text-ink-300">
+              Commission Balance
+            </p>
           </div>
-          <p className="text-4xl font-bold">
+          <p className="text-4xl font-bold tracking-tight text-primary-400 tabular-nums">
             {formatCurrency(profile?.commissionBalance || 0)}
           </p>
-          <p className="text-sm opacity-75 mt-2">
+          <p className="text-sm text-ink-400 mt-3">
             Minimum withdrawal: RM10
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hover:shadow-lift">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="h-8 w-8 text-green-600" />
-            <p className="text-sm text-gray-600">Total Earned</p>
+          <div className="flex items-center gap-3 mb-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-100 text-ink-700">
+              <TrendingUp className="h-5 w-5" strokeWidth={2} />
+            </span>
+            <p className="text-sm font-medium text-ink-500">Total Earned</p>
           </div>
-          <p className="text-4xl font-bold text-gray-900">
+          <p className="text-4xl font-bold tracking-tight text-ink-950 tabular-nums">
             {formatCurrency(profile?.totalEarned || 0)}
           </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Including {formatCurrency(profile?.totalWithdrawn || 0)} withdrawn
+          <p className="text-sm text-ink-400 mt-3">
+            Termasuk {formatCurrency(profile?.totalWithdrawn || 0)} telah
+            dikeluarkan
           </p>
         </CardContent>
       </Card>

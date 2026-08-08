@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DessertsManager } from "./desserts-manager";
 import { OrdersManager } from "./orders-manager";
@@ -11,11 +10,18 @@ import { FinancialOverview } from "./financial-overview";
 
 export function AdminDashboard() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="mb-10 animate-fade-up">
+        <h1 className="text-3xl font-bold tracking-tight text-ink-950">
+          Admin Dashboard
+        </h1>
+        <p className="mt-1 text-ink-500">
+          Pantau prestasi bisnes dan uruskan operasi harian
+        </p>
+      </div>
 
       {/* Financial Overview - Always visible at top */}
-      <div className="mb-8">
+      <div className="mb-10">
         <FinancialOverview />
       </div>
 

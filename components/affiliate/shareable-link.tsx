@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Link2, Copy, Check, Share2, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Link2,
+  Copy,
+  Check,
+  Share2,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  TrendingUp,
+  Lightbulb,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +32,7 @@ export function ShareableLink() {
       const res = await fetch("/api/profile");
       const data = await res.json();
       setProfile(data);
-      
+
       const baseUrl = window.location.origin;
       const url = `${baseUrl}/shop/${data.id}`;
       setShopUrl(url);
@@ -47,7 +57,7 @@ export function ShareableLink() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'LODES Desserts - Order Now!',
+          title: "LODES Desserts - Order Now!",
           text: `Order delicious desserts through my link and get the best service!`,
           url: shopUrl,
         });
@@ -60,129 +70,115 @@ export function ShareableLink() {
   };
 
   const handleOpenShop = () => {
-    window.open(shopUrl, '_blank');
+    window.open(shopUrl, "_blank");
   };
 
   if (loading) {
-    return <div className="text-center py-4">Loading...</div>;
+    return <div className="skeleton h-24" />;
   }
 
   return (
-    <Card className="border-2 border-primary-200 bg-gradient-to-br from-primary-50 to-white">
-      <CardHeader 
-        className="cursor-pointer hover:bg-primary-100/50 transition-colors"
+    <Card className="overflow-hidden">
+      <CardHeader
+        className="cursor-pointer hover:bg-ink-50 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Link2 className="h-5 w-5 text-primary-600" />
-            <CardTitle>Your Affiliate Shop Link</CardTitle>
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500 text-ink-950">
+              <Link2 className="h-5 w-5" strokeWidth={2} />
+            </span>
+            <CardTitle className="text-lg">Your Affiliate Shop Link</CardTitle>
           </div>
           {isOpen ? (
-            <ChevronUp className="h-5 w-5 text-primary-600" />
+            <ChevronUp className="h-5 w-5 text-ink-400" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-primary-600" />
+            <ChevronDown className="h-5 w-5 text-ink-400" />
           )}
         </div>
         {!isOpen && (
-          <p className="text-sm text-gray-600 mt-2">
-            Click to view and share your unique shop link
+          <p className="text-sm text-ink-500 mt-2">
+            Klik untuk lihat dan kongsi link kedai unik anda
           </p>
         )}
       </CardHeader>
-      
+
       {isOpen && (
-        <CardContent className="space-y-4 animate-in slide-in-from-top-2 duration-200">
-        <div className="bg-white border-2 border-primary-300 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex-1">
-              <Input
-                value={shopUrl}
-                readOnly
-                className="font-mono text-sm bg-gray-50"
-              />
+        <CardContent className="space-y-4 animate-fade-up">
+          <div className="bg-ink-50 border border-ink-200/70 rounded-xl p-4">
+            <Input
+              value={shopUrl}
+              readOnly
+              className="font-mono text-sm bg-white mb-3"
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <Button onClick={handleCopy} variant="outline" className="w-full">
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2 text-emerald-600" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Link
+                  </>
+                )}
+              </Button>
+
+              <Button
+                onClick={handleShare}
+                variant="outline"
+                className="w-full"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share Link
+              </Button>
+
+              <Button onClick={handleOpenShop} className="w-full">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                View Shop
+              </Button>
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <Button
-              onClick={handleCopy}
-              variant="outline"
-              className="w-full"
-            >
-              {copied ? (
-                <>
-                  <Check className="h-4 w-4 mr-2 text-green-600" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy Link
-                </>
-              )}
-            </Button>
 
-            <Button
-              onClick={handleShare}
-              variant="outline"
-              className="w-full"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Share Link
-            </Button>
-
-            <Button
-              onClick={handleOpenShop}
-              className="w-full"
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              View Shop
-            </Button>
+          <div className="bg-emerald-50 border border-emerald-200/70 rounded-xl p-4">
+            <h4 className="font-semibold text-emerald-900 mb-2 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              How It Works
+            </h4>
+            <ul className="text-sm text-emerald-800 space-y-1">
+              <li>• Customer visits your shop link</li>
+              <li>• They browse and order desserts</li>
+              <li>• You earn commission automatically!</li>
+              <li>• Track all orders in &quot;My Orders&quot; tab</li>
+            </ul>
           </div>
-        </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            How It Works
-          </h4>
-          <ul className="text-sm text-green-800 space-y-1">
-            <li>• Customer visits your shop link</li>
-            <li>• They browse and order desserts</li>
-            <li>• You earn commission automatically!</li>
-            <li>• Track all orders in &quot;My Orders&quot; tab</li>
-          </ul>
-        </div>
+          <div className="bg-primary-50 border border-primary-200/60 rounded-xl p-4">
+            <h4 className="font-semibold text-ink-900 mb-2 flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-primary-600" />
+              Pro Tips
+            </h4>
+            <ul className="text-sm text-ink-700 space-y-1">
+              <li>• Share on WhatsApp, Facebook, Instagram</li>
+              <li>• Add to your social media bio</li>
+              <li>• Send directly to potential customers</li>
+              <li>• Post in groups and communities</li>
+            </ul>
+          </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-blue-900 mb-2">💡 Pro Tips</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Share on WhatsApp, Facebook, Instagram</li>
-            <li>• Add to your social media bio</li>
-            <li>• Send directly to potential customers</li>
-            <li>• Post in groups and communities</li>
-          </ul>
-        </div>
-        
-        <div className="text-center pt-2 border-t">
-          <button
-            onClick={() => setIsOpen(false)}
-            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-          >
-            Collapse
-          </button>
-        </div>
-      </CardContent>
+          <div className="text-center pt-2 border-t border-ink-100">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-sm text-ink-600 hover:text-ink-950 font-semibold transition-colors cursor-pointer"
+            >
+              Collapse
+            </button>
+          </div>
+        </CardContent>
       )}
     </Card>
-  );
-}
-
-function TrendingUp({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-    </svg>
   );
 }

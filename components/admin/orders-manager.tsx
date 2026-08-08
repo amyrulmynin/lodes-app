@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X, Download } from "lucide-react";
+import { Check, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { generateOrderInvoicePDF, type InvoicePaymentSettings } from "@/lib/invoice-generator";
+import {
+  generateOrderInvoicePDF,
+  type InvoicePaymentSettings,
+} from "@/lib/invoice-generator";
+import { StatusBadge } from "./financial-overview";
 
 interface Order {
   id: number;
@@ -29,9 +33,12 @@ interface Order {
 
 export function OrdersManager() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [paymentSettings, setPaymentSettings] = useState<InvoicePaymentSettings | null>(null);
+  const [paymentSettings, setPaymentSettings] =
+    useState<InvoicePaymentSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
+  const [filter, setFilter] = useState<
+    "all" | "pending" | "accepted" | "rejected"
+  >("all");
 
   useEffect(() => {
     fetchOrders();
@@ -69,7 +76,10 @@ export function OrdersManager() {
     }
   };
 
-  const handleUpdateStatus = async (orderId: number, status: "accepted" | "rejected") => {
+  const handleUpdateStatus = async (
+    orderId: number,
+    status: "accepted" | "rejected"
+  ) => {
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
@@ -91,14 +101,27 @@ export function OrdersManager() {
   });
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="skeleton h-44" />
+        ))}
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Manage Orders</h2>
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-ink-950">
+            Manage Orders
+          </h2>
+          <p className="text-sm text-ink-500 mt-1">
+            Semak dan proses order daripada affiliates
+          </p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
           <Button
             size="sm"
             variant={filter === "all" ? "default" : "outline"}
@@ -125,94 +148,118 @@ export function OrdersManager() {
 
       <div className="space-y-4">
         {filteredOrders.map((order) => (
-          <Card key={order.id}>
+          <Card key={order.id} className="hover:shadow-lift">
             <CardContent className="pt-6">
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex justify-between items-start mb-5">
                 <div>
-                  <h3 className="font-bold text-lg">Order #{order.id}</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="font-bold text-lg text-ink-950">
+                    Order #{order.id}
+                  </h3>
+                  <p className="text-sm text-ink-400">
                     {formatDate(new Date(order.submittedAt))}
                   </p>
                 </div>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    order.status === "pending"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : order.status === "accepted"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
-                  {order.status}
-                </span>
+                <StatusBadge status={order.status} />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Dessert</p>
-                  <p className="font-medium">{order.dessert.name}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400 mb-1">
+                    Dessert
+                  </p>
+                  <p className="font-semibold text-ink-900">
+                    {order.dessert.name}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Kuantiti</p>
-                  <p className="font-medium">{order.quantity}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400 mb-1">
+                    Kuantiti
+                  </p>
+                  <p className="font-semibold text-ink-900 tabular-nums">
+                    {order.quantity}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Customer</p>
-                  <p className="font-medium">{order.customerName}</p>
-                  <p className="text-sm text-gray-600">{order.customerPhone}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400 mb-1">
+                    Customer
+                  </p>
+                  <p className="font-semibold text-ink-900">
+                    {order.customerName}
+                  </p>
+                  <p className="text-sm text-ink-500">{order.customerPhone}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Affiliate</p>
-                  <p className="font-medium">{order.affiliate.name}</p>
-                  <p className="text-sm text-gray-600">{order.affiliate.email}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400 mb-1">
+                    Affiliate
+                  </p>
+                  <p className="font-semibold text-ink-900">
+                    {order.affiliate.name}
+                  </p>
+                  <p className="text-sm text-ink-500">
+                    {order.affiliate.email}
+                  </p>
                 </div>
               </div>
 
               {order.customerAddress && (
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-gray-500">Alamat</p>
-                  <p className="text-sm">{order.customerAddress}</p>
+                <div className="mb-5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400 mb-1">
+                    Alamat
+                  </p>
+                  <p className="text-sm text-ink-700">
+                    {order.customerAddress}
+                  </p>
                 </div>
               )}
 
               {order.notes && (
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-gray-500">Nota</p>
-                  <p className="text-sm">{order.notes}</p>
+                <div className="mb-5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400 mb-1">
+                    Nota
+                  </p>
+                  <p className="text-sm text-ink-700">{order.notes}</p>
                 </div>
               )}
 
-              <div className="flex justify-between items-center pt-4 border-t">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-5 border-t border-ink-100">
                 <div>
-                  <p className="text-sm text-gray-500">Jumlah</p>
-                  <p className="text-xl font-bold text-primary-600">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">
+                    Jumlah
+                  </p>
+                  <p className="text-2xl font-bold tracking-tight text-ink-950 tabular-nums">
                     {formatCurrency(order.totalPrice)}
                   </p>
-                  <p className="text-sm text-green-600">
+                  <p className="text-sm font-medium text-emerald-600 tabular-nums">
                     Komisen: {formatCurrency(order.commissionAmount)}
                   </p>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => handleDownloadInvoice(order)}
                   >
-                    <Download className="h-4 w-4 mr-2" />
+                    <FileText className="h-4 w-4 mr-2" />
                     Invoice
                   </Button>
                   {order.status === "pending" && (
                     <>
                       <Button
-                        variant="outline"
-                        onClick={() => handleUpdateStatus(order.id, "accepted")}
+                        size="sm"
+                        onClick={() =>
+                          handleUpdateStatus(order.id, "accepted")
+                        }
                       >
                         <Check className="h-4 w-4 mr-2" />
                         Terima
                       </Button>
                       <Button
                         variant="destructive"
-                        onClick={() => handleUpdateStatus(order.id, "rejected")}
+                        size="sm"
+                        onClick={() =>
+                          handleUpdateStatus(order.id, "rejected")
+                        }
                       >
                         <X className="h-4 w-4 mr-2" />
                         Tolak
@@ -227,8 +274,10 @@ export function OrdersManager() {
 
         {filteredOrders.length === 0 && (
           <Card>
-            <CardContent className="py-8 text-center text-gray-500">
-              Tiada order {filter !== "all" && filter}
+            <CardContent className="py-12 text-center">
+              <p className="text-ink-400">
+                Tiada order {filter !== "all" && filter}
+              </p>
             </CardContent>
           </Card>
         )}

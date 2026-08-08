@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, CakeSlice, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -87,7 +87,9 @@ export function SubmitOrder() {
 
   const calculateTotal = () => {
     if (!selectedDessert) return 0;
-    return parseFloat(selectedDessert.price) * parseInt(formData.quantity || "1");
+    return (
+      parseFloat(selectedDessert.price) * parseInt(formData.quantity || "1")
+    );
   };
 
   const calculateCommission = () => {
@@ -96,36 +98,59 @@ export function SubmitOrder() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="skeleton h-64" />
+        ))}
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Submit New Order</h2>
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-ink-950">
+          Submit New Order
+        </h2>
+        <p className="text-sm text-ink-500 mt-1">
+          Pilih dessert dan isi maklumat customer
+        </p>
+      </div>
 
       {!selectedDessert ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {desserts.map((dessert) => (
             <Card
               key={dessert.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow"
+              className="cursor-pointer overflow-hidden hover:shadow-lift group"
               onClick={() => setSelectedDessert(dessert)}
             >
-              <CardContent className="pt-6">
-                {dessert.imageUrl && (
+              {dessert.imageUrl ? (
+                <div className="h-44 overflow-hidden">
                   <img
                     src={dessert.imageUrl}
                     alt={dessert.name}
-                    className="w-full h-48 object-cover rounded-lg mb-4"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                )}
-                <h3 className="font-bold text-lg mb-2">{dessert.name}</h3>
-                <p className="text-sm text-gray-600 mb-3">{dessert.description}</p>
+                </div>
+              ) : (
+                <div className="h-44 bg-ink-100 flex items-center justify-center">
+                  <CakeSlice className="h-10 w-10 text-ink-300" />
+                </div>
+              )}
+              <CardContent className="pt-5">
+                <h3 className="font-bold text-lg text-ink-950 mb-1">
+                  {dessert.name}
+                </h3>
+                <p className="text-sm text-ink-500 mb-4 line-clamp-2 min-h-[2.5rem]">
+                  {dessert.description}
+                </p>
                 <div className="flex justify-between items-center">
-                  <span className="text-xl font-bold text-primary-600">
+                  <span className="text-xl font-bold tracking-tight text-ink-950 tabular-nums">
                     {formatCurrency(dessert.price)}
                   </span>
-                  <span className="text-sm bg-green-100 text-green-700 px-2 py-1 rounded">
+                  <span className="text-xs font-semibold bg-primary-100 text-primary-800 px-2.5 py-1 rounded-full">
                     {dessert.commissionRate}% komisen
                   </span>
                 </div>
@@ -134,14 +159,18 @@ export function SubmitOrder() {
           ))}
         </div>
       ) : (
-        <Card>
+        <Card className="animate-fade-up">
           <CardHeader>
-            <CardTitle>Order: {selectedDessert.name}</CardTitle>
+            <CardTitle className="text-lg">
+              Order: {selectedDessert.name}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Kuantiti</label>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-ink-800">
+                  Kuantiti
+                </label>
                 <Input
                   type="number"
                   min="1"
@@ -153,8 +182,10 @@ export function SubmitOrder() {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium">Nama Customer</label>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-ink-800">
+                  Nama Customer
+                </label>
                 <Input
                   value={formData.customerName}
                   onChange={(e) =>
@@ -164,8 +195,10 @@ export function SubmitOrder() {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium">Telefon Customer</label>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-ink-800">
+                  Telefon Customer
+                </label>
                 <Input
                   value={formData.customerPhone}
                   onChange={(e) =>
@@ -175,18 +208,25 @@ export function SubmitOrder() {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium">Alamat Penghantaran (Optional)</label>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-ink-800">
+                  Alamat Penghantaran (Optional)
+                </label>
                 <Input
                   value={formData.customerAddress}
                   onChange={(e) =>
-                    setFormData({ ...formData, customerAddress: e.target.value })
+                    setFormData({
+                      ...formData,
+                      customerAddress: e.target.value,
+                    })
                   }
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium">Nota (Optional)</label>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-ink-800">
+                  Nota (Optional)
+                </label>
                 <Input
                   value={formData.notes}
                   onChange={(e) =>
@@ -196,21 +236,34 @@ export function SubmitOrder() {
                 />
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span>Jumlah:</span>
-                  <span className="font-bold">{formatCurrency(calculateTotal())}</span>
+              <div className="bg-ink-950 text-white rounded-xl p-5 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-ink-300">Jumlah:</span>
+                  <span className="font-bold text-lg tabular-nums">
+                    {formatCurrency(calculateTotal())}
+                  </span>
                 </div>
-                <div className="flex justify-between text-green-600">
-                  <span>Komisen Anda:</span>
-                  <span className="font-bold">{formatCurrency(calculateCommission())}</span>
+                <div className="flex justify-between items-center pt-3 border-t border-white/10">
+                  <span className="text-sm text-ink-300">Komisen Anda:</span>
+                  <span className="font-bold text-lg text-primary-400 tabular-nums">
+                    {formatCurrency(calculateCommission())}
+                  </span>
                 </div>
               </div>
 
               <div className="flex gap-2">
                 <Button type="submit" disabled={submitting}>
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  {submitting ? "Submitting..." : "Submit Order"}
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Submit Order
+                    </>
+                  )}
                 </Button>
                 <Button
                   type="button"

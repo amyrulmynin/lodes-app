@@ -10,16 +10,27 @@ export default async function Invoices() {
     redirect("/login");
   }
 
-  const role = session.user.role === "admin" ? "admin" : "affiliate";
+  // Invoices are admin-only
+  if (session.user.role !== "admin") {
+    redirect("/affiliate");
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-dvh bg-ink-50">
       <Navbar
         userName={session.user.name || session.user.email || ""}
-        role={role}
+        role="admin"
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <InvoicesPage role={role} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mb-10 animate-fade-up">
+          <h1 className="text-3xl font-bold tracking-tight text-ink-950">
+            Invoices
+          </h1>
+          <p className="mt-1 text-ink-500">
+            Jana dan urus invoice untuk customer
+          </p>
+        </div>
+        <InvoicesPage role="admin" />
       </div>
     </div>
   );

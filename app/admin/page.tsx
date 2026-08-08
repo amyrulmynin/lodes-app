@@ -15,7 +15,7 @@ export default async function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-dvh bg-ink-50">
       <Navbar userName={session.user.name || session.user.email || ""} role="admin" />
       <AdminDashboard />
     </div>

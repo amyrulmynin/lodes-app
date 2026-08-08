@@ -153,7 +153,9 @@ export function ManualInvoiceForm() {
         {/* Invoice meta */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">No. Invoice</label>
+            <label className="text-sm font-semibold text-ink-800">
+              No. Invoice
+            </label>
             <Input
               value={invoiceNumber}
               onChange={(e) => setInvoiceNumber(e.target.value)}
@@ -161,7 +163,7 @@ export function ManualInvoiceForm() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tarikh</label>
+            <label className="text-sm font-semibold text-ink-800">Tarikh</label>
             <Input
               type="date"
               value={invoiceDate}
@@ -169,13 +171,13 @@ export function ManualInvoiceForm() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Status</label>
+            <label className="text-sm font-semibold text-ink-800">Status</label>
             <select
               value={status}
               onChange={(e) =>
                 setStatus(e.target.value as "accepted" | "pending" | "paid")
               }
-              className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              className="flex h-11 w-full rounded-xl border border-ink-200 bg-white px-4 py-2 text-sm text-ink-900 transition-colors focus-visible:outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-primary-500/40 cursor-pointer"
             >
               <option value="accepted">DISAHKAN</option>
               <option value="paid">DIBAYAR</option>
@@ -186,12 +188,14 @@ export function ManualInvoiceForm() {
 
         {/* Customer info */}
         <div className="space-y-4">
-          <h3 className="font-semibold text-gray-700 border-b pb-2">
+          <h3 className="font-semibold text-ink-900 border-b border-ink-100 pb-2">
             Maklumat Customer
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nama Customer *</label>
+              <label className="text-sm font-semibold text-ink-800">
+                Nama Customer *
+              </label>
               <Input
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
@@ -199,7 +203,9 @@ export function ManualInvoiceForm() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">No. Telefon *</label>
+              <label className="text-sm font-semibold text-ink-800">
+                No. Telefon *
+              </label>
               <Input
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
@@ -208,21 +214,21 @@ export function ManualInvoiceForm() {
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Alamat</label>
+            <label className="text-sm font-semibold text-ink-800">Alamat</label>
             <textarea
               value={customerAddress}
               onChange={(e) => setCustomerAddress(e.target.value)}
               placeholder="Alamat penghantaran (optional)"
               rows={2}
-              className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              className="flex w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-sm text-ink-900 placeholder:text-ink-400 transition-colors focus-visible:outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-primary-500/40"
             />
           </div>
         </div>
 
         {/* Items */}
         <div className="space-y-4">
-          <div className="flex justify-between items-center border-b pb-2">
-            <h3 className="font-semibold text-gray-700">Item Pesanan</h3>
+          <div className="flex justify-between items-center border-b border-ink-100 pb-2">
+            <h3 className="font-semibold text-ink-900">Item Pesanan</h3>
             <Button variant="outline" size="sm" onClick={addItem}>
               <Plus className="h-4 w-4 mr-1" />
               Tambah Item
@@ -263,7 +269,7 @@ export function ManualInvoiceForm() {
                     placeholder="Kuantiti"
                   />
                 </div>
-                <div className="col-span-3 sm:col-span-1 text-sm font-medium text-gray-700 text-right">
+                <div className="col-span-3 sm:col-span-1 text-sm font-semibold text-ink-800 text-right tabular-nums">
                   {formatCurrency(
                     (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)
                   )}
@@ -283,10 +289,12 @@ export function ManualInvoiceForm() {
             ))}
           </div>
 
-          <div className="flex justify-end pt-2 border-t">
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Jumlah Keseluruhan</p>
-              <p className="text-2xl font-bold text-primary-600">
+          <div className="flex justify-end pt-3 border-t border-ink-100">
+            <div className="rounded-xl bg-ink-950 px-6 py-4 text-right">
+              <p className="text-xs font-medium text-ink-400">
+                Jumlah Keseluruhan
+              </p>
+              <p className="text-2xl font-bold tracking-tight text-primary-400 tabular-nums">
                 {formatCurrency(grandTotal)}
               </p>
             </div>
@@ -295,13 +303,15 @@ export function ManualInvoiceForm() {
 
         {/* Notes */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Nota (optional)</label>
+          <label className="text-sm font-semibold text-ink-800">
+            Nota (optional)
+          </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Contoh: Penghantaran pada hari Sabtu, bayaran tunai semasa pickup"
             rows={2}
-            className="flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            className="flex w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-sm text-ink-900 placeholder:text-ink-400 transition-colors focus-visible:outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-primary-500/40"
           />
         </div>
 

@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DollarSign, TrendingUp, TrendingDown, Wallet, ShoppingCart, Users } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  ShoppingCart,
+  Users,
+  ArrowUpRight,
+  ArrowDownRight,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -51,193 +59,212 @@ export function FinancialOverview() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="skeleton h-32" />
+          ))}
+        </div>
+        <div className="skeleton h-64" />
+      </div>
+    );
   }
+
+  const summaryCards = [
+    {
+      label: "Total Revenue",
+      value: stats?.totalRevenue || "0",
+      hint: "Dari semua order diterima",
+      icon: TrendingUp,
+      featured: true,
+    },
+    {
+      label: "Commissions Paid",
+      value: stats?.totalWithdrawals || "0",
+      hint: "Jumlah withdrawal diproses",
+      icon: TrendingDown,
+      featured: false,
+    },
+    {
+      label: "Pending Commissions",
+      value: stats?.totalCommissions || "0",
+      hint: "Dalam baki affiliate",
+      icon: Wallet,
+      featured: false,
+    },
+    {
+      label: "Net Profit",
+      value: stats?.netProfit || "0",
+      hint: "Revenue tolak komisen",
+      icon: ShoppingCart,
+      featured: false,
+    },
+  ];
+
+  const quickStats = [
+    { label: "Pending Orders", value: stats?.pendingOrders || 0, icon: ShoppingCart },
+    { label: "Accepted Orders", value: stats?.acceptedOrders || 0, icon: ShoppingCart },
+    { label: "Pending Withdrawals", value: stats?.pendingWithdrawals || 0, icon: Wallet },
+    { label: "Total Affiliates", value: stats?.totalAffiliates || 0, icon: Users },
+  ];
 
   return (
     <div className="space-y-8">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Revenue */}
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6" />
-              </div>
-              <div className="text-right">
-                <p className="text-sm opacity-90">Total Revenue</p>
-                <p className="text-3xl font-bold">{formatCurrency(stats?.totalRevenue || "0")}</p>
-              </div>
-            </div>
-            <p className="text-xs opacity-75 mt-2">From all accepted orders</p>
-          </CardContent>
-        </Card>
-
-        {/* Total Commissions Paid */}
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
-                <TrendingDown className="h-6 w-6" />
-              </div>
-              <div className="text-right">
-                <p className="text-sm opacity-90">Commissions Paid</p>
-                <p className="text-3xl font-bold">{formatCurrency(stats?.totalWithdrawals || "0")}</p>
-              </div>
-            </div>
-            <p className="text-xs opacity-75 mt-2">Total withdrawals processed</p>
-          </CardContent>
-        </Card>
-
-        {/* Pending Commissions */}
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
-                <Wallet className="h-6 w-6" />
-              </div>
-              <div className="text-right">
-                <p className="text-sm opacity-90">Pending Commissions</p>
-                <p className="text-3xl font-bold">{formatCurrency(stats?.totalCommissions || "0")}</p>
-              </div>
-            </div>
-            <p className="text-xs opacity-75 mt-2">In affiliate balances</p>
-          </CardContent>
-        </Card>
-
-        {/* Net Profit */}
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
-                <DollarSign className="h-6 w-6" />
-              </div>
-              <div className="text-right">
-                <p className="text-sm opacity-90">Net Profit</p>
-                <p className="text-3xl font-bold">{formatCurrency(stats?.netProfit || "0")}</p>
-              </div>
-            </div>
-            <p className="text-xs opacity-75 mt-2">Revenue - Commissions</p>
-          </CardContent>
-        </Card>
+      {/* Summary Cards — 1 featured (brand), rest neutral */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {summaryCards.map((card) => {
+          const Icon = card.icon;
+          return card.featured ? (
+            <Card
+              key={card.label}
+              className="bg-ink-950 border-ink-950 text-white relative overflow-hidden"
+            >
+              <div
+                aria-hidden
+                className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-primary-500/25 blur-2xl pointer-events-none"
+              />
+              <CardContent className="pt-6 relative">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500 text-ink-950">
+                    <Icon className="h-5 w-5" strokeWidth={2} />
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-ink-300">{card.label}</p>
+                <p className="mt-1 text-3xl font-bold tracking-tight text-primary-400 tabular-nums">
+                  {formatCurrency(card.value)}
+                </p>
+                <p className="mt-2 text-xs text-ink-400">{card.hint}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card key={card.label} className="hover:shadow-lift">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-100 text-ink-700">
+                    <Icon className="h-5 w-5" strokeWidth={2} />
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-ink-500">{card.label}</p>
+                <p className="mt-1 text-3xl font-bold tracking-tight text-ink-950 tabular-nums">
+                  {formatCurrency(card.value)}
+                </p>
+                <p className="mt-2 text-xs text-ink-400">{card.hint}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <ShoppingCart className="h-8 w-8 text-yellow-600" />
+      {/* Quick stats strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {quickStats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.label}
+              className="flex items-center gap-3 rounded-2xl border border-ink-200/70 bg-white px-5 py-4"
+            >
+              <Icon className="h-5 w-5 text-ink-400" strokeWidth={2} />
               <div>
-                <p className="text-2xl font-bold">{stats?.pendingOrders || 0}</p>
-                <p className="text-sm text-gray-600">Pending Orders</p>
+                <p className="text-xl font-bold text-ink-950 tabular-nums">
+                  {stat.value}
+                </p>
+                <p className="text-xs font-medium text-ink-500">{stat.label}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <ShoppingCart className="h-8 w-8 text-green-600" />
-              <div>
-                <p className="text-2xl font-bold">{stats?.acceptedOrders || 0}</p>
-                <p className="text-sm text-gray-600">Accepted Orders</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Wallet className="h-8 w-8 text-orange-600" />
-              <div>
-                <p className="text-2xl font-bold">{stats?.pendingWithdrawals || 0}</p>
-                <p className="text-sm text-gray-600">Pending Withdrawals</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Users className="h-8 w-8 text-blue-600" />
-              <div>
-                <p className="text-2xl font-bold">{stats?.totalAffiliates || 0}</p>
-                <p className="text-sm text-gray-600">Total Affiliates</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          );
+        })}
       </div>
 
       {/* Recent Transactions */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-          <p className="text-sm text-gray-600 mt-2">
-            Latest financial activities across orders and withdrawals
+          <CardTitle className="text-lg">Transaksi Terkini</CardTitle>
+          <p className="text-sm text-ink-500">
+            Aktiviti kewangan terbaru merentasi orders dan withdrawals
           </p>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto -mx-6 px-6">
             <table className="w-full">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-semibold text-sm">Date</th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm">Type</th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm">Description</th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm">Affiliate</th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm">Amount</th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm">Status</th>
+                <tr className="border-b border-ink-100">
+                  <th className="text-left py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+                    Tarikh
+                  </th>
+                  <th className="text-left py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+                    Jenis
+                  </th>
+                  <th className="text-left py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+                    Deskripsi
+                  </th>
+                  <th className="text-left py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+                    Affiliate
+                  </th>
+                  <th className="text-right py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+                    Jumlah
+                  </th>
+                  <th className="text-left py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-500">
-                      No transactions yet
+                    <td colSpan={6} className="text-center py-10 text-ink-400">
+                      Tiada transaksi lagi
                     </td>
                   </tr>
                 ) : (
                   transactions.map((txn) => (
-                    <tr key={`${txn.type}-${txn.id}`} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm">
+                    <tr
+                      key={`${txn.type}-${txn.id}`}
+                      className="border-b border-ink-100 last:border-0 hover:bg-ink-50 transition-colors"
+                    >
+                      <td className="py-3 px-3 text-sm text-ink-600 whitespace-nowrap">
                         {formatDate(new Date(txn.date))}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-3">
                         <span
-                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
                             txn.type === "order"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-orange-100 text-orange-700"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-primary-50 text-primary-800"
                           }`}
                         >
-                          {txn.type === "order" ? "💰 Income" : "💸 Payout"}
+                          {txn.type === "order" ? (
+                            <>
+                              <ArrowUpRight className="h-3 w-3" /> Income
+                            </>
+                          ) : (
+                            <>
+                              <ArrowDownRight className="h-3 w-3" /> Payout
+                            </>
+                          )}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-sm">{txn.description}</td>
-                      <td className="py-3 px-4 text-sm font-medium">{txn.affiliate}</td>
-                      <td className="py-3 px-4 text-sm font-bold">
-                        <span className={txn.type === "order" ? "text-green-600" : "text-orange-600"}>
-                          {txn.type === "order" ? "+" : "-"}{formatCurrency(txn.amount)}
-                        </span>
+                      <td className="py-3 px-3 text-sm text-ink-700">
+                        {txn.description}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-3 text-sm font-medium text-ink-900">
+                        {txn.affiliate}
+                      </td>
+                      <td className="py-3 px-3 text-sm font-bold text-right tabular-nums">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            txn.status === "accepted"
-                              ? "bg-green-100 text-green-700"
-                              : txn.status === "pending"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
+                          className={
+                            txn.type === "order"
+                              ? "text-emerald-600"
+                              : "text-ink-900"
+                          }
                         >
-                          {txn.status}
+                          {txn.type === "order" ? "+" : "−"}
+                          {formatCurrency(txn.amount)}
                         </span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <StatusBadge status={txn.status} />
                       </td>
                     </tr>
                   ))
@@ -247,65 +274,23 @@ export function FinancialOverview() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Financial Summary */}
-      <Card className="border-2 border-primary-200 bg-gradient-to-br from-primary-50 to-white">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-primary-600" />
-            Financial Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg border-b pb-2">Money In</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total Orders Revenue:</span>
-                  <span className="font-bold text-green-600">
-                    {formatCurrency(stats?.totalRevenue || "0")}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Accepted Orders:</span>
-                  <span className="font-semibold">{stats?.acceptedOrders || 0}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg border-b pb-2">Money Out</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Commissions Paid:</span>
-                  <span className="font-bold text-orange-600">
-                    {formatCurrency(stats?.totalWithdrawals || "0")}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Pending Commissions:</span>
-                  <span className="font-semibold text-blue-600">
-                    {formatCurrency(stats?.totalCommissions || "0")}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 pt-6 border-t">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-gray-900">Net Profit:</span>
-              <span className="text-2xl font-bold text-purple-600">
-                {formatCurrency(stats?.netProfit || "0")}
-              </span>
-            </div>
-            <p className="text-xs text-gray-500 mt-2 text-right">
-              (Total Revenue - Commissions Paid)
-            </p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
+  );
+}
+
+export function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    accepted: "bg-emerald-50 text-emerald-700",
+    pending: "bg-primary-100 text-primary-800",
+    rejected: "bg-red-50 text-red-700",
+  };
+  return (
+    <span
+      className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
+        styles[status] || "bg-ink-100 text-ink-600"
+      }`}
+    >
+      {status}
+    </span>
   );
 }
