@@ -4,5 +4,6 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/affiliate/:path*",
+    "/invoices/:path*",
   ],
 };

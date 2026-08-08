@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { generateOrderInvoicePDF, type InvoicePaymentSettings } from "@/lib/invoice-generator";
 
 interface Order {
   id: number;
@@ -28,11 +29,13 @@ interface Order {
 
 export function OrdersManager() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [paymentSettings, setPaymentSettings] = useState<InvoicePaymentSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
 
   useEffect(() => {
     fetchOrders();
+    fetchPaymentSettings();
   }, []);
 
   const fetchOrders = async () => {
@@ -44,6 +47,25 @@ export function OrdersManager() {
       console.error("Error fetching orders:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPaymentSettings = async () => {
+    try {
+      const res = await fetch("/api/payment-settings");
+      const data = await res.json();
+      setPaymentSettings(data || null);
+    } catch (error) {
+      console.error("Error fetching payment settings:", error);
+    }
+  };
+
+  const handleDownloadInvoice = (order: Order) => {
+    try {
+      generateOrderInvoicePDF(order, paymentSettings);
+    } catch (error) {
+      console.error("Error generating invoice:", error);
+      alert("Gagal menjana invoice. Sila cuba lagi.");
     }
   };
 
@@ -171,24 +193,33 @@ export function OrdersManager() {
                   </p>
                 </div>
 
-                {order.status === "pending" && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleUpdateStatus(order.id, "accepted")}
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      Terima
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleUpdateStatus(order.id, "rejected")}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Tolak
-                    </Button>
-                  </div>
-                )}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownloadInvoice(order)}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Invoice
+                  </Button>
+                  {order.status === "pending" && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleUpdateStatus(order.id, "accepted")}
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        Terima
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleUpdateStatus(order.id, "rejected")}
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Tolak
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

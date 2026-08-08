@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { generateOrderInvoicePDF, type InvoicePaymentSettings } from "@/lib/invoice-generator";
 
 interface Order {
   id: number;
@@ -24,12 +25,14 @@ interface Order {
 
 export function OrdersList() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [paymentSettings, setPaymentSettings] = useState<InvoicePaymentSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
   useEffect(() => {
     fetchOrders();
+    fetchPaymentSettings();
   }, []);
 
   const fetchOrders = async () => {
@@ -41,6 +44,25 @@ export function OrdersList() {
       console.error("Error fetching orders:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPaymentSettings = async () => {
+    try {
+      const res = await fetch("/api/payment-settings");
+      const data = await res.json();
+      setPaymentSettings(data || null);
+    } catch (error) {
+      console.error("Error fetching payment settings:", error);
+    }
+  };
+
+  const handleDownloadInvoice = (order: Order) => {
+    try {
+      generateOrderInvoicePDF(order, paymentSettings);
+    } catch (error) {
+      console.error("Error generating invoice:", error);
+      alert("Gagal menjana invoice. Sila cuba lagi.");
     }
   };
 
@@ -131,19 +153,29 @@ export function OrdersList() {
                 </div>
               )}
 
-              <div className="pt-4 border-t">
-                <div className="flex justify-between items-center">
-                  <p className="text-sm text-gray-500">Komisen Anda</p>
-                  <p className="text-xl font-bold text-green-600">
-                    {formatCurrency(order.commissionAmount)}
-                  </p>
+                <div className="pt-4 border-t">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm text-gray-500">Komisen Anda</p>
+                      <p className="text-xl font-bold text-green-600">
+                        {formatCurrency(order.commissionAmount)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadInvoice(order)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Invoice
+                    </Button>
+                  </div>
+                  {order.status === "pending" && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Komisen akan dikreditkan setelah order diterima oleh admin
+                    </p>
+                  )}
                 </div>
-                {order.status === "pending" && (
-                  <p className="text-sm text-gray-500 mt-2">
-                    Komisen akan dikreditkan setelah order diterima oleh admin
-                  </p>
-                )}
-              </div>
             </CardContent>
           </Card>
         ))}
