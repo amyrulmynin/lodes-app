@@ -44,6 +44,10 @@ export const orders = pgTable("orders", {
   notes: text("notes"),
   receiptUrl: text("receipt_url"),
   feedbackToken: text("feedback_token").unique(),
+  paymentMethod: text("payment_method"),
+  paymentStatus: text("payment_status").notNull().default("unpaid"),
+  mudahpayTxnId: text("mudahpay_txn_id"),
+  paidAt: timestamp("paid_at"),
   status: orderStatusEnum("status").notNull().default('pending'),
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
   processedAt: timestamp("processed_at"),
@@ -141,3 +145,33 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   }),
 }));
 
+
+
+export const integrationSettings = pgTable("integration_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  isEnabled: integer("is_enabled").notNull().default(0),
+  config: text("config").notNull().default("{}"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const ingredients = pgTable("ingredients", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  unit: text("unit").notNull().default("pcs"),
+  currentStock: decimal("current_stock", { precision: 10, scale: 2 }).notNull().default("0"),
+  minStockLevel: decimal("min_stock_level", { precision: 10, scale: 2 }).notNull().default("0"),
+  costPerUnit: decimal("cost_per_unit", { precision: 10, scale: 2 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const stockMovements = pgTable("stock_movements", {
+  id: serial("id").primaryKey(),
+  ingredientId: integer("ingredient_id").notNull().references(() => ingredients.id),
+  type: text("type").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  note: text("note"),
+  receiptUrl: text("receipt_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

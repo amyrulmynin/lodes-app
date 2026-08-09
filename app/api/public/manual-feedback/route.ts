@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { reviews } from "@/db/schema";
 import { sendReviewNotification } from "@/lib/integrations/whatsapp";
+import { telegramNewReview } from "@/lib/integrations/telegram";
 
 const ADMIN_WHATSAPP = "60166673810";
 
@@ -49,6 +50,13 @@ export async function POST(request: NextRequest) {
       comment: comment?.trim() || null,
       source: "manual",
     }).catch((e) => console.error("Review notify failed:", e));
+
+    // Telegram notification (non-blocking)
+    telegramNewReview({
+      customerName: name.trim(),
+      rating: ratingNum,
+      comment: comment?.trim() || null,
+    }).catch((e) => console.error("Telegram review notify failed:", e));
 
     // Build WhatsApp share message for the customer - direct stars
     const stars = "⭐".repeat(ratingNum);

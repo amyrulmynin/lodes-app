@@ -5,6 +5,7 @@ import { orders, users, desserts } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { sendWhatsAppNotification } from "@/lib/integrations/whatsapp";
 import { logOrderToGoogleSheets } from "@/lib/integrations/google-sheets";
+import { telegramNewOrder } from "@/lib/integrations/telegram";
 
 export async function GET(request: NextRequest) {
   try {
@@ -130,6 +131,16 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('Google Sheets logging failed:', error);
     }
+
+    // Telegram notification (non-blocking)
+    telegramNewOrder({
+      orderId: newOrder[0].id,
+      dessertName: dessert.name,
+      quantity,
+      totalPrice: totalPrice.toFixed(2),
+      customerName,
+      affiliateName: affiliate?.name || session.user.name || 'Unknown',
+    }).catch((e) => console.error('Telegram notify failed:', e));
 
     return NextResponse.json(newOrder[0], { status: 201 });
   } catch (error) {

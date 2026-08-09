@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { orders, reviews } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { sendReviewNotification } from "@/lib/integrations/whatsapp";
+import { telegramNewReview } from "@/lib/integrations/telegram";
 
 // GET /api/public/feedback/[token] - get order info for feedback form
 export async function GET(
@@ -97,6 +98,13 @@ export async function POST(
         dessertName: fullOrder?.dessert?.name,
         source: "order",
       }).catch((e) => console.error("Review notify failed:", e));
+
+      telegramNewReview({
+        customerName: order.customerName,
+        rating: ratingNum,
+        comment: comment?.trim() || null,
+        dessertName: fullOrder?.dessert?.name,
+      }).catch((e) => console.error("Telegram review notify failed:", e));
     } catch (e) {
       console.error("Review notify setup failed:", e);
     }

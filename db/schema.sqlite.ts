@@ -39,6 +39,10 @@ export const orders = sqliteTable("orders", {
   notes: text("notes"),
   receiptUrl: text("receipt_url"),
   feedbackToken: text("feedback_token").unique(),
+  paymentMethod: text("payment_method"),
+  paymentStatus: text("payment_status").notNull().default("unpaid"),
+  mudahpayTxnId: text("mudahpay_txn_id"),
+  paidAt: integer("paid_at", { mode: "timestamp" }),
   status: text("status", { enum: ["pending", "accepted", "rejected"] }).notNull().default("pending"),
   submittedAt: integer("submitted_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   processedAt: integer("processed_at", { mode: "timestamp" }),
@@ -86,3 +90,33 @@ export const reviews = sqliteTable("reviews", {
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+
+
+export const integrationSettings = sqliteTable("integration_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  key: text("key").notNull().unique(),
+  isEnabled: integer("is_enabled").notNull().default(0),
+  config: text("config").notNull().default("{}"),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const ingredients = sqliteTable("ingredients", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  unit: text("unit").notNull().default("pcs"),
+  currentStock: text("current_stock").notNull().default("0"),
+  minStockLevel: text("min_stock_level").notNull().default("0"),
+  costPerUnit: text("cost_per_unit"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const stockMovements = sqliteTable("stock_movements", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  ingredientId: integer("ingredient_id").notNull().references(() => ingredients.id),
+  type: text("type").notNull(),
+  quantity: text("quantity").notNull(),
+  note: text("note"),
+  receiptUrl: text("receipt_url"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});

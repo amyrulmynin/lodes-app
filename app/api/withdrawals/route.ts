@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { withdrawals, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { telegramNewWithdrawal } from "@/lib/integrations/telegram";
 
 export async function GET(request: NextRequest) {
   try {
@@ -113,6 +114,14 @@ export async function POST(request: NextRequest) {
     }
 
     const newWithdrawal = await db.insert(withdrawals).values(withdrawalData).returning();
+
+    // Telegram notification (non-blocking)
+    telegramNewWithdrawal({
+      withdrawalId: newWithdrawal[0].id,
+      amount: amountNum.toFixed(2),
+      affiliateName: user.name,
+      method: withdrawalMethod,
+    }).catch((e) => console.error('Telegram notify failed:', e));
 
     return NextResponse.json(newWithdrawal[0], { status: 201 });
   } catch (error) {

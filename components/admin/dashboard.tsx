@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FinancialOverview } from "./financial-overview";
+import { AiInsights } from "./ai-insights";
 
 export function AdminDashboard() {
   const { data: session } = useSession();
@@ -30,6 +31,11 @@ export function AdminDashboard() {
           <Download className="h-4 w-4 mr-2" />
           Export Report
         </Button>
+      </div>
+
+      {/* AI Copilot */}
+      <div className="mb-10">
+        <AiInsights />
       </div>
 
       {/* Financial Overview */}

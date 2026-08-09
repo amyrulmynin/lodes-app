@@ -15,6 +15,8 @@ import {
   Wallet,
   MessageSquareQuote,
   CreditCard,
+  Package,
+  Settings,
   Menu,
   X,
 } from "lucide-react";
@@ -38,6 +40,8 @@ const manageMenu = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
   { href: "/admin/payment", label: "Payment", icon: CreditCard },
+  { href: "/admin/stock", label: "Stock", icon: Package },
+  { href: "/admin/settings", label: "Integrations", icon: Settings },
 ];
 
 export function AdminSidebar({ userName }: AdminSidebarProps) {
