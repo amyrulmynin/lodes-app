@@ -3,15 +3,11 @@
 import { useEffect, useState } from "react";
 import {
   TrendingUp,
-  TrendingDown,
   Wallet,
   ShoppingCart,
   Users,
-  ArrowUpRight,
-  ArrowDownRight,
   ArrowUp,
   ArrowDown,
-  CakeSlice,
   Trophy,
 } from "lucide-react";
 import {
@@ -26,7 +22,7 @@ import {
   Area,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 interface FinancialStats {
   totalRevenue: string;
@@ -39,16 +35,6 @@ interface FinancialStats {
   totalAffiliates: number;
   totalOrders: number;
   ordersChange: number;
-}
-
-interface Transaction {
-  id: number;
-  type: "order" | "withdrawal";
-  date: string;
-  description: string;
-  amount: string;
-  status: string;
-  affiliate: string;
 }
 
 interface ChartPoint {
@@ -109,7 +95,6 @@ function ChangePill({ value }: { value: number }) {
 
 export function FinancialOverview() {
   const [stats, setStats] = useState<FinancialStats | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [sparkline, setSparkline] = useState<number[]>([]);
   const [topDesserts, setTopDesserts] = useState<TopDessert[]>([]);
@@ -126,7 +111,6 @@ export function FinancialOverview() {
       if (res.ok) {
         const data = await res.json();
         setStats(data.stats);
-        setTransactions(data.transactions);
         setChartData(data.chartData || []);
         setSparkline(data.sparkline || []);
         setTopDesserts(data.topDesserts || []);
@@ -480,103 +464,6 @@ export function FinancialOverview() {
         </Card>
       </div>
 
-      {/* ===== Row 4: Recent Transactions ===== */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Transaksi Terkini</CardTitle>
-          <p className="text-sm text-ink-500">
-            Aktiviti kewangan terbaru merentasi orders dan withdrawals
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto -mx-6 px-6">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-ink-100">
-                  <th className="text-left py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
-                    Tarikh
-                  </th>
-                  <th className="text-left py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
-                    Jenis
-                  </th>
-                  <th className="text-left py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
-                    Deskripsi
-                  </th>
-                  <th className="text-left py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
-                    Affiliate
-                  </th>
-                  <th className="text-right py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
-                    Jumlah
-                  </th>
-                  <th className="text-left py-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-10 text-ink-400">
-                      Tiada transaksi lagi
-                    </td>
-                  </tr>
-                ) : (
-                  transactions.map((txn) => (
-                    <tr
-                      key={`${txn.type}-${txn.id}`}
-                      className="border-b border-ink-100 last:border-0 hover:bg-ink-50 transition-colors"
-                    >
-                      <td className="py-3 px-3 text-sm text-ink-600 whitespace-nowrap">
-                        {formatDate(new Date(txn.date))}
-                      </td>
-                      <td className="py-3 px-3">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            txn.type === "order"
-                              ? "bg-emerald-50 text-emerald-700"
-                              : "bg-primary-50 text-primary-800"
-                          }`}
-                        >
-                          {txn.type === "order" ? (
-                            <>
-                              <ArrowUpRight className="h-3 w-3" /> Income
-                            </>
-                          ) : (
-                            <>
-                              <ArrowDownRight className="h-3 w-3" /> Payout
-                            </>
-                          )}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-sm text-ink-700">
-                        {txn.description}
-                      </td>
-                      <td className="py-3 px-3 text-sm font-medium text-ink-900">
-                        {txn.affiliate}
-                      </td>
-                      <td className="py-3 px-3 text-sm font-bold text-right tabular-nums">
-                        <span
-                          className={
-                            txn.type === "order"
-                              ? "text-emerald-600"
-                              : "text-ink-900"
-                          }
-                        >
-                          {txn.type === "order" ? "+" : "−"}
-                          {formatCurrency(txn.amount)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <StatusBadge status={txn.status} />
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

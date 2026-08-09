@@ -23,5 +23,6 @@ export const config = {
     "/admin/:path*",
     "/affiliate/:path*",
     "/invoices/:path*",
+    "/transactions/:path*",
   ],
 };

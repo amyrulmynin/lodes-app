@@ -2,7 +2,13 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LogOut, LayoutDashboard, FileText, CakeSlice } from "lucide-react";
+import {
+  LogOut,
+  LayoutDashboard,
+  FileText,
+  CakeSlice,
+  ArrowLeftRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
 
@@ -24,9 +30,12 @@ export function Navbar({ userName, role }: NavbarProps) {
 
   const menuItems = [
     { href: dashboardPath, label: "Dashboard", icon: LayoutDashboard },
-    // Invoices are admin-only
+    // Invoices & Transactions are admin-only
     ...(role === "admin"
-      ? [{ href: "/invoices", label: "Invoices", icon: FileText }]
+      ? [
+          { href: "/invoices", label: "Invoices", icon: FileText },
+          { href: "/transactions", label: "Transaksi", icon: ArrowLeftRight },
+        ]
       : []),
   ];
 
