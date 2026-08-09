@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X, FileText } from "lucide-react";
+import { Check, X, FileText, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -21,6 +21,9 @@ interface Order {
   customerPhone: string;
   customerAddress: string | null;
   notes: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  locationAccuracy: string | null;
   status: string;
   submittedAt: Date;
   dessert: {
@@ -210,6 +213,26 @@ export function OrdersManager() {
                   <p className="text-sm text-ink-700">
                     {order.customerAddress}
                   </p>
+                </div>
+              )}
+
+              {/* Delivery location (GPS pin from customer) */}
+              {order.latitude && order.longitude && (
+                <div className="mb-5">
+                  <a
+                    href={`https://www.google.com/maps?q=${order.latitude},${order.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-ink-950 text-primary-400 font-semibold text-sm hover:bg-ink-900 transition-colors"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Lokasi Delivery (GPS)
+                    {order.locationAccuracy && (
+                      <span className="text-xs text-ink-400 font-normal">
+                        ±{Math.round(parseFloat(order.locationAccuracy))}m
+                      </span>
+                    )}
+                  </a>
                 </div>
               )}
 

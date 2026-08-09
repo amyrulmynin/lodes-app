@@ -20,6 +20,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
+import dynamic from "next/dynamic";
+import type { LocationValue } from "@/components/public/location-picker";
+
+// Load map client-side only (Leaflet needs window)
+const LocationPicker = dynamic(
+  () =>
+    import("@/components/public/location-picker").then((m) => m.LocationPicker),
+  { ssr: false }
+);
 
 interface Dessert {
   id: number;
@@ -72,6 +81,10 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
   } | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentPaid, setPaymentPaid] = useState(false);
+
+  // Delivery location + tracking
+  const [location, setLocation] = useState<LocationValue | null>(null);
+  const [trackingUrl, setTrackingUrl] = useState("");
 
   // Poll payment status while QR is shown
   useEffect(() => {
@@ -158,20 +171,14 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
       const orderRes = await fetch("/api/public/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          affiliateId: parseInt(affiliateId),
-          dessertId: selectedDessert.id,
-          quantity: parseInt(formData.quantity),
-          customerName: formData.customerName,
-          customerPhone: formData.customerPhone,
-          customerAddress: formData.customerAddress,
-          notes: formData.notes,
-          paymentMethod: "mudahpay",
-        }),
+        body: JSON.stringify(buildOrderPayload("mudahpay")),
       });
 
       if (!orderRes.ok) throw new Error("order failed");
       const order = await orderRes.json();
+      if (order.trackingToken) {
+        setTrackingUrl(`${window.location.origin}/track/${order.trackingToken}`);
+      }
 
       // 2. Request a MudahPay QR for this order
       const payRes = await fetch("/api/public/payment", {
@@ -205,6 +212,22 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
       setPaymentLoading(false);
     }
   };
+
+  // Build the order payload shared by both payment flows
+  const buildOrderPayload = (method?: string) => ({
+    affiliateId: parseInt(affiliateId),
+    dessertId: selectedDessert!.id,
+    quantity: parseInt(formData.quantity),
+    customerName: formData.customerName,
+    customerPhone: formData.customerPhone,
+    // Prefer the reverse-geocoded address from GPS, else manual text
+    customerAddress: location?.address || formData.customerAddress,
+    notes: formData.notes,
+    paymentMethod: method,
+    latitude: location?.latitude,
+    longitude: location?.longitude,
+    locationAccuracy: location?.accuracy,
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -267,18 +290,16 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          affiliateId: parseInt(affiliateId),
-          dessertId: selectedDessert.id,
-          quantity: parseInt(formData.quantity),
-          customerName: formData.customerName,
-          customerPhone: formData.customerPhone,
-          customerAddress: formData.customerAddress,
-          notes: formData.notes,
+          ...buildOrderPayload(),
           receiptUrl: receiptData || null,
         }),
       });
 
       if (res.ok) {
+        const order = await res.json();
+        if (order.trackingToken) {
+          setTrackingUrl(`${window.location.origin}/track/${order.trackingToken}`);
+        }
         setOrderSuccess(true);
         setSelectedDessert(null);
         setShowPayment(false);
@@ -388,7 +409,7 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
                 <CheckCircle className="h-8 w-8 text-emerald-600 flex-shrink-0" />
-                <div>
+                <div className="flex-1">
                   <h3 className="font-bold text-emerald-900 text-lg mb-1">
                     Order Berjaya Disubmit!
                   </h3>
@@ -396,6 +417,36 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
                     Terima kasih atas pesanan anda. Admin akan review dan
                     menghubungi anda tidak lama lagi.
                   </p>
+
+                  {trackingUrl && (
+                    <div className="my-4 bg-white border border-emerald-200 rounded-xl p-4">
+                      <p className="text-sm font-semibold text-emerald-900 mb-2 flex items-center gap-1.5">
+                        <MapPin className="h-4 w-4" />
+                        Jejak status order anda di sini:
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <a
+                          href={trackingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-ink-900 text-primary-400 font-semibold text-sm hover:bg-ink-950 transition-colors"
+                        >
+                          Lihat Status Order
+                        </a>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(trackingUrl);
+                            alert("Link tracking disalin!");
+                          }}
+                        >
+                          Copy Link
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   <Button
                     onClick={() => setOrderSuccess(false)}
                     variant="outline"
@@ -506,6 +557,9 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
                     placeholder="Alamat lengkap untuk penghantaran"
                   />
                 </div>
+
+                {/* GPS location picker (optional but recommended) */}
+                <LocationPicker value={location} onChange={setLocation} />
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-ink-800 flex items-center gap-1.5">
