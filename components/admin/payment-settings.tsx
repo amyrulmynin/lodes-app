@@ -73,15 +73,6 @@ export function PaymentSettings() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-ink-950">
-          Payment Settings
-        </h2>
-        <p className="text-sm text-ink-500 mt-1">
-          Setup QR code dan maklumat bank untuk paparan pembayaran customer
-        </p>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">

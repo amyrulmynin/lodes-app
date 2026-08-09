@@ -140,10 +140,10 @@ export function WithdrawalsManager() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-ink-950">
-            Manage Withdrawals
+            Senarai Withdrawals
           </h2>
           <p className="text-sm text-ink-500 mt-1">
-            Proses permintaan pengeluaran komisen affiliate
+            {withdrawals.length} permintaan pengeluaran
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">

@@ -93,10 +93,10 @@ export function AffiliatesManager() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-ink-950">
-            Manage Affiliates
+            Senarai Affiliates
           </h2>
           <p className="text-sm text-ink-500 mt-1">
-            Daftar dan pantau akaun affiliate anda
+            {affiliates.length} affiliate berdaftar
           </p>
         </div>
         <Button onClick={() => setShowForm(!showForm)}>

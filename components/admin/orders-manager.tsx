@@ -115,10 +115,10 @@ export function OrdersManager() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-ink-950">
-            Manage Orders
+            Senarai Orders
           </h2>
           <p className="text-sm text-ink-500 mt-1">
-            Semak dan proses order daripada affiliates
+            {orders.length} order direkodkan
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">

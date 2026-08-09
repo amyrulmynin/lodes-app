@@ -2,13 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { Download } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { DessertsManager } from "./desserts-manager";
-import { OrdersManager } from "./orders-manager";
-import { WithdrawalsManager } from "./withdrawals-manager";
-import { AffiliatesManager } from "./affiliates-manager";
-import { PaymentSettings } from "./payment-settings";
 import { FinancialOverview } from "./financial-overview";
 
 export function AdminDashboard() {
@@ -38,41 +32,8 @@ export function AdminDashboard() {
         </Button>
       </div>
 
-      {/* Financial Overview - Always visible at top */}
-      <div className="mb-10">
-        <FinancialOverview />
-      </div>
-
-      {/* Management Tabs */}
-      <Tabs defaultValue="desserts" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-8">
-          <TabsTrigger value="desserts">Desserts</TabsTrigger>
-          <TabsTrigger value="affiliates">Affiliates</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-          <TabsTrigger value="payment">Payment</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="desserts">
-          <DessertsManager />
-        </TabsContent>
-
-        <TabsContent value="affiliates">
-          <AffiliatesManager />
-        </TabsContent>
-
-        <TabsContent value="orders">
-          <OrdersManager />
-        </TabsContent>
-
-        <TabsContent value="withdrawals">
-          <WithdrawalsManager />
-        </TabsContent>
-
-        <TabsContent value="payment">
-          <PaymentSettings />
-        </TabsContent>
-      </Tabs>
+      {/* Financial Overview */}
+      <FinancialOverview />
     </div>
   );
 }

@@ -116,10 +116,10 @@ export function DessertsManager() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-ink-950">
-            Manage Desserts
+            Senarai Desserts
           </h2>
           <p className="text-sm text-ink-500 mt-1">
-            Tambah dan kemaskini menu dessert beserta kadar komisen
+            {desserts.length} dessert dalam menu
           </p>
         </div>
         <Button

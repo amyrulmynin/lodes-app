@@ -9,6 +9,11 @@ import {
   FileText,
   ArrowLeftRight,
   CakeSlice,
+  Cake,
+  Users,
+  ShoppingCart,
+  Wallet,
+  CreditCard,
   Menu,
   X,
 } from "lucide-react";
@@ -19,10 +24,18 @@ interface AdminSidebarProps {
   userName: string;
 }
 
-const menuItems = [
+const mainMenu = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/invoices", label: "Invoices", icon: FileText },
   { href: "/transactions", label: "Transaksi", icon: ArrowLeftRight },
+];
+
+const manageMenu = [
+  { href: "/admin/desserts", label: "Desserts", icon: Cake },
+  { href: "/admin/affiliates", label: "Affiliates", icon: Users },
+  { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
+  { href: "/admin/payment", label: "Payment", icon: CreditCard },
 ];
 
 export function AdminSidebar({ userName }: AdminSidebarProps) {
@@ -33,6 +46,31 @@ export function AdminSidebar({ userName }: AdminSidebarProps) {
   const handleLogout = async () => {
     await signOut({ redirect: false });
     router.push("/login");
+  };
+
+  const renderLink = (
+    item: { href: string; label: string; icon: any },
+    indented = false
+  ) => {
+    const Icon = item.icon;
+    const isActive = pathname === item.href;
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={() => setMobileOpen(false)}
+        className={`flex items-center gap-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+          indented ? "px-4 py-2.5" : "px-4 py-3"
+        } ${
+          isActive
+            ? "bg-primary-500 text-ink-950"
+            : "text-ink-300 hover:text-white hover:bg-white/5"
+        }`}
+      >
+        <Icon className={indented ? "h-4 w-4" : "h-5 w-5"} strokeWidth={2} />
+        {item.label}
+      </Link>
+    );
   };
 
   const sidebarContent = (
@@ -52,25 +90,13 @@ export function AdminSidebar({ userName }: AdminSidebarProps) {
 
       {/* Menu */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                isActive
-                  ? "bg-primary-500 text-ink-950"
-                  : "text-ink-300 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Icon className="h-5 w-5" strokeWidth={2} />
-              {item.label}
-            </Link>
-          );
-        })}
+        {mainMenu.map((item) => renderLink(item))}
+
+        {/* Sub-menu: Pengurusan */}
+        <p className="px-4 pt-5 pb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-ink-500">
+          Pengurusan
+        </p>
+        {manageMenu.map((item) => renderLink(item))}
       </nav>
 
       {/* User + logout */}
