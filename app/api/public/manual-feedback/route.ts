@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
       source: "manual",
     }).catch((e) => console.error("Review notify failed:", e));
 
-    // Build WhatsApp share message for the customer
-    const stars = "\u2B50".repeat(ratingNum);
+    // Build WhatsApp share message for the customer (hardcoded ⭐ literal)
+    const stars = "⭐".repeat(ratingNum);
     const lines = [
       `Hi Lodes Desserts! Saya ${name.trim()}.`,
       "",
