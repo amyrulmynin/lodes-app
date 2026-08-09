@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { orders, reviews } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { sendReviewNotification } from "@/lib/integrations/whatsapp";
 
 // GET /api/public/feedback/[token] - get order info for feedback form
 export async function GET(
@@ -82,9 +83,28 @@ export async function POST(
       isVisible: ratingNum >= 4 ? 1 : 0, // auto-show only 4-5 stars
     });
 
+    // Notify admin about the new review (non-blocking)
+    try {
+      const fullOrder = await db.query.orders.findFirst({
+        where: eq(orders.feedbackToken, token),
+        with: { dessert: true },
+      });
+      sendReviewNotification({
+        customerName: order.customerName,
+        customerPhone: order.customerPhone,
+        rating: ratingNum,
+        comment: comment?.trim() || null,
+        dessertName: fullOrder?.dessert?.name,
+        source: "order",
+      }).catch((e) => console.error("Review notify failed:", e));
+    } catch (e) {
+      console.error("Review notify setup failed:", e);
+    }
+
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
     console.error("Error submitting feedback:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+

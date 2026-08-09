@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Star, Eye, EyeOff, Trash2, MessageSquareQuote } from "lucide-react";
+import { Star, Eye, EyeOff, Trash2, MessageSquareQuote, QrCode, Link2, Check, Download, X } from "lucide-react";
+import QRCode from "qrcode";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
@@ -39,6 +40,159 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+function StaticShareCard() {
+  const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [reviewUrl, setReviewUrl] = useState("");
+
+  useEffect(() => {
+    setReviewUrl(`${window.location.origin}/review`);
+  }, []);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(reviewUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleQr = async () => {
+    try {
+      const dataUrl = await QRCode.toDataURL(reviewUrl, {
+        width: 400,
+        margin: 2,
+        color: { dark: "#141412", light: "#ffffff" },
+      });
+      setQrDataUrl(dataUrl);
+      setShowQr(true);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return (
+    <>
+      <Card className="bg-ink-950 border-ink-950 text-white relative overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-primary-500/20 blur-2xl pointer-events-none"
+        />
+        <CardContent className="pt-6 relative">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <Link2 className="h-5 w-5 text-primary-400" />
+                Link Review Statik (Manual)
+              </h3>
+              <p className="text-sm text-ink-300 mt-1">
+                Untuk customer walk-in / bukan affiliate. Boleh guna berulang
+                kali. Customer isi nama + WhatsApp sendiri.
+              </p>
+              {reviewUrl && (
+                <p className="text-xs text-primary-400 font-mono mt-2 break-all">
+                  {reviewUrl}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopy}
+                className="bg-white/10 border-white/10 text-white hover:bg-white/15 hover:text-primary-300"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2 text-emerald-400" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Copy Link
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleQr}
+                className="bg-primary-500 text-ink-950 hover:bg-primary-400"
+              >
+                <QrCode className="h-4 w-4 mr-2" />
+                QR Code
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {showQr && (
+        <div
+          className="fixed inset-0 bg-ink-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowQr(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-lift animate-fade-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-ink-950 flex items-center gap-2">
+                <QrCode className="h-5 w-5" />
+                QR Review Statik
+              </h3>
+              <button
+                onClick={() => setShowQr(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-400 hover:text-ink-900 hover:bg-ink-100 transition-colors cursor-pointer"
+                aria-label="Tutup"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="border-2 border-dashed border-ink-200 rounded-xl p-6 text-center">
+              <p className="text-lg font-bold tracking-tight text-ink-950">
+                Lodes<span className="text-primary-600">.</span> Desserts
+              </p>
+              <p className="text-xs text-ink-500 mt-1 mb-4">
+                Macam mana dessert kami? Scan &amp; bagi review!
+              </p>
+              {qrDataUrl && (
+                <img
+                  src={qrDataUrl}
+                  alt="Review QR Code"
+                  className="w-full max-w-[220px] mx-auto rounded-lg"
+                />
+              )}
+              <p className="text-xs text-ink-400 mt-4">
+                Terima kasih atas sokongan anda
+              </p>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <a
+                href={qrDataUrl}
+                download="lodes-review-qr.png"
+                className="flex-1 inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-ink-900 text-primary-400 font-semibold text-sm hover:bg-ink-950 transition-colors"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download PNG
+              </a>
+              <Button
+                variant="outline"
+                onClick={() => window.print()}
+                className="flex-1"
+              >
+                Print
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 export function ReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
@@ -105,6 +259,8 @@ export function ReviewsPage() {
 
   return (
     <div className="space-y-6">
+      <StaticShareCard />
+
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
@@ -289,3 +445,6 @@ export function ReviewsPage() {
     </div>
   );
 }
+
+
+

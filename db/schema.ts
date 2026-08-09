@@ -114,10 +114,12 @@ export const paymentSettings = pgTable("payment_settings", {
 
 export const reviews = pgTable("reviews", {
   id: serial("id").primaryKey(),
-  orderId: integer("order_id").notNull().references(() => orders.id).unique(),
-  affiliateId: integer("affiliate_id").notNull().references(() => users.id),
-  dessertId: integer("dessert_id").notNull().references(() => desserts.id),
+  orderId: integer("order_id").references(() => orders.id).unique(),
+  affiliateId: integer("affiliate_id").references(() => users.id),
+  dessertId: integer("dessert_id").references(() => desserts.id),
   customerName: text("customer_name").notNull(),
+  customerPhone: text("customer_phone"),
+  source: text("source").notNull().default("order"),
   rating: integer("rating").notNull(),
   comment: text("comment"),
   isVisible: integer("is_visible").notNull().default(1),
@@ -138,3 +140,4 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
     references: [users.id],
   }),
 }));
+

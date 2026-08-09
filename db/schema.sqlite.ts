@@ -74,12 +74,15 @@ export const paymentSettings = sqliteTable("payment_settings", {
 
 export const reviews = sqliteTable("reviews", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  orderId: integer("order_id").notNull().references(() => orders.id).unique(),
-  affiliateId: integer("affiliate_id").notNull().references(() => users.id),
-  dessertId: integer("dessert_id").notNull().references(() => desserts.id),
+  orderId: integer("order_id").references(() => orders.id).unique(),
+  affiliateId: integer("affiliate_id").references(() => users.id),
+  dessertId: integer("dessert_id").references(() => desserts.id),
   customerName: text("customer_name").notNull(),
+  customerPhone: text("customer_phone"),
+  source: text("source").notNull().default("order"),
   rating: integer("rating").notNull(),
   comment: text("comment"),
   isVisible: integer("is_visible").notNull().default(1),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
+
