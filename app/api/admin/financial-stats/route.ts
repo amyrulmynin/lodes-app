@@ -61,6 +61,94 @@ export async function GET(request: NextRequest) {
     // Calculate net profit
     const netProfit = totalRevenue - totalWithdrawals;
 
+    // ===== Chart data: last 12 months =====
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const now = new Date();
+    const chartData = [];
+    let thisMonthOrders = 0;
+    let lastMonthOrders = 0;
+
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const y = d.getFullYear();
+      const m = d.getMonth();
+
+      const monthOrders = acceptedOrders.filter((o) => {
+        const od = new Date(o.submittedAt);
+        return od.getFullYear() === y && od.getMonth() === m;
+      });
+
+      const revenue = monthOrders.reduce((s, o) => s + parseFloat(o.totalPrice), 0);
+      const commission = monthOrders.reduce((s, o) => s + parseFloat(o.commissionAmount), 0);
+
+      if (i === 0) thisMonthOrders = monthOrders.length;
+      if (i === 1) lastMonthOrders = monthOrders.length;
+
+      chartData.push({
+        month: monthNames[m],
+        revenue: parseFloat(revenue.toFixed(2)),
+        commission: parseFloat(commission.toFixed(2)),
+        orders: monthOrders.length,
+      });
+    }
+
+    // MoM change for total orders
+    const ordersChange =
+      lastMonthOrders === 0
+        ? thisMonthOrders > 0
+          ? 100
+          : 0
+        : parseFloat((((thisMonthOrders - lastMonthOrders) / lastMonthOrders) * 100).toFixed(1));
+
+    // Daily orders for current month (sparkline)
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const sparkline: number[] = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const count = acceptedOrders.filter((o) => {
+        const od = new Date(o.submittedAt);
+        return (
+          od.getFullYear() === now.getFullYear() &&
+          od.getMonth() === now.getMonth() &&
+          od.getDate() === day
+        );
+      }).length;
+      sparkline.push(count);
+    }
+
+    // ===== Top desserts by revenue =====
+    const dessertMap = new Map<number, { name: string; units: number; revenue: number }>();
+    for (const o of acceptedOrders) {
+      const key = o.dessertId;
+      const existing = dessertMap.get(key) || {
+        name: o.dessert?.name || "Unknown",
+        units: 0,
+        revenue: 0,
+      };
+      existing.units += o.quantity;
+      existing.revenue += parseFloat(o.totalPrice);
+      dessertMap.set(key, existing);
+    }
+    const topDesserts = Array.from(dessertMap.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+
+    // ===== Top affiliates by revenue =====
+    const affiliateMap = new Map<number, { name: string; orders: number; revenue: number }>();
+    for (const o of acceptedOrders) {
+      const key = o.affiliateId;
+      const existing = affiliateMap.get(key) || {
+        name: o.affiliate?.name || "Unknown",
+        orders: 0,
+        revenue: 0,
+      };
+      existing.orders += 1;
+      existing.revenue += parseFloat(o.totalPrice);
+      affiliateMap.set(key, existing);
+    }
+    const topAffiliates = Array.from(affiliateMap.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+
     // Prepare recent transactions (last 20)
     const recentTransactions = [];
 
@@ -104,11 +192,17 @@ export async function GET(request: NextRequest) {
       acceptedOrders: acceptedOrders.length,
       pendingWithdrawals: pendingWithdrawalsData.length,
       totalAffiliates: allAffiliates.length,
+      totalOrders: acceptedOrders.length + pendingOrdersCount.length,
+      ordersChange,
     };
 
     return NextResponse.json({
       stats,
       transactions: recentTransactions.slice(0, 20),
+      chartData,
+      sparkline,
+      topDesserts,
+      topAffiliates,
     });
   } catch (error) {
     console.error("Error fetching financial stats:", error);
