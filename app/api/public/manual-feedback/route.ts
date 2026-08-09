@@ -51,9 +51,18 @@ export async function POST(request: NextRequest) {
     }).catch((e) => console.error("Review notify failed:", e));
 
     // Build WhatsApp share message for the customer
-    const stars = "?".repeat(ratingNum) + "?".repeat(5 - ratingNum);
-    const waMessage = `Hi Lodes Desserts! Saya ${name.trim()}.%0A%0ARating: ${stars} (${ratingNum}/5)%0A${comment?.trim() ? "Komen: " + encodeURIComponent(comment.trim()) + "%0A" : ""}%0ATerima kasih!`;
-    const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${waMessage.replace(/ /g, "%20")}`;
+    const stars = "\u2B50".repeat(ratingNum);
+    const lines = [
+      `Hi Lodes Desserts! Saya ${name.trim()}.`,
+      "",
+      `Rating: ${stars} (${ratingNum}/5)`,
+      comment?.trim() ? `Komen: ${comment.trim()}` : "",
+      "",
+      "Terima kasih!",
+    ];
+    const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(
+      lines.join("\n")
+    )}`;
 
     return NextResponse.json({ success: true, whatsappUrl }, { status: 201 });
   } catch (error) {
@@ -61,4 +70,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-

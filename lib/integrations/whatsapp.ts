@@ -9,7 +9,7 @@ export async function sendWhatsAppNotification(orderData: {
   notes?: string;
 }) {
   if (!process.env.WHATSAPP_API_URL || !process.env.WHATSAPP_API_TOKEN) {
-    console.log('WhatsApp API not configured, skipping notification');
+    console.log("WhatsApp API not configured, skipping notification");
     return;
   }
 
@@ -23,20 +23,20 @@ export async function sendWhatsAppNotification(orderData: {
 👤 *Customer:*
 Nama: ${orderData.customerName}
 Telefon: ${orderData.customerPhone}
-${orderData.customerAddress ? `Alamat: ${orderData.customerAddress}` : ''}
+${orderData.customerAddress ? `Alamat: ${orderData.customerAddress}` : ""}
 
 👥 *Affiliate:* ${orderData.affiliateName}
-${orderData.notes ? `\n📝 *Nota:* ${orderData.notes}` : ''}
+${orderData.notes ? `\n📝 *Nota:* ${orderData.notes}` : ""}
 
 Terima kasih! 🙏
   `.trim();
 
   try {
     const response = await fetch(process.env.WHATSAPP_API_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
       },
       body: JSON.stringify({
         to: process.env.WHATSAPP_PHONE_NUMBER,
@@ -50,7 +50,7 @@ Terima kasih! 🙏
 
     return await response.json();
   } catch (error) {
-    console.error('Error sending WhatsApp notification:', error);
+    console.error("Error sending WhatsApp notification:", error);
     throw error;
   }
 }
@@ -65,32 +65,32 @@ export async function sendReviewNotification(reviewData: {
   source?: string;
 }) {
   if (!process.env.WHATSAPP_API_URL || !process.env.WHATSAPP_API_TOKEN) {
-    console.log('WhatsApp API not configured, skipping review notification');
+    console.log("WhatsApp API not configured, skipping review notification");
     return;
   }
 
-  const stars = '?'.repeat(reviewData.rating) + '?'.repeat(5 - reviewData.rating);
+  const stars = "\u2B50".repeat(reviewData.rating);
 
   const message = `
-? *REVIEW BARU LODES*
+⭐ *REVIEW BARU LODES*
 
-?? *Customer:* ${reviewData.customerName}
-${reviewData.customerPhone ? `?? *WhatsApp:* ${reviewData.customerPhone}` : ''}
-${reviewData.dessertName ? `?? *Dessert:* ${reviewData.dessertName}` : ''}
-${reviewData.source === 'manual' ? '?? *Sumber:* Manual (link statik)' : '?? *Sumber:* Order'}
+👤 *Customer:* ${reviewData.customerName}
+${reviewData.customerPhone ? `📱 *WhatsApp:* ${reviewData.customerPhone}` : ""}
+${reviewData.dessertName ? `🍰 *Dessert:* ${reviewData.dessertName}` : ""}
+${reviewData.source === "manual" ? "📝 *Sumber:* Manual (link statik)" : "🛒 *Sumber:* Order"}
 
 *Rating:* ${stars} (${reviewData.rating}/5)
-${reviewData.comment ? `\n?? *Komen:* ${reviewData.comment}` : ''}
+${reviewData.comment ? `\n💬 *Komen:* ${reviewData.comment}` : ""}
 
 Semak di Admin > Reviews.
   `.trim();
 
   try {
     const response = await fetch(process.env.WHATSAPP_API_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
       },
       body: JSON.stringify({
         to: process.env.WHATSAPP_PHONE_NUMBER,
@@ -104,7 +104,7 @@ Semak di Admin > Reviews.
 
     return await response.json();
   } catch (error) {
-    console.error('Error sending review notification:', error);
+    console.error("Error sending review notification:", error);
     throw error;
   }
 }
