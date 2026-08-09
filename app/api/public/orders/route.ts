@@ -63,7 +63,9 @@ export async function POST(request: NextRequest) {
       customerAddress: customerAddress || null,
       notes: notes || null,
       receiptUrl: receiptUrl || null,
-      paymentMethod: body.paymentMethod || null,
+      // payment_method is an ENUM ('online' | 'cod') in the DB.
+      // MudahPay is an online payment -> map to 'online'.
+      paymentMethod: body.paymentMethod === "mudahpay" ? "online" : body.paymentMethod || null,
       status: 'pending',
     }).returning();
 

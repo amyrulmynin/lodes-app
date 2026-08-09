@@ -43,11 +43,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: 502 });
     }
 
-    // Store txn id + mark method
+    // Store txn id + mark as online payment (enum only allows 'online'|'cod')
     await db
       .update(orders)
       .set({
-        paymentMethod: "mudahpay",
+        paymentMethod: "online",
         mudahpayTxnId: result.transactionId,
         paymentStatus: "awaiting_payment",
       })

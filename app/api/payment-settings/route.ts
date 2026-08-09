@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { paymentSettings } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
+import { getIntegration, type MudahPayConfig } from "@/lib/integrations/config";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +11,12 @@ export async function GET(request: NextRequest) {
       orderBy: desc(paymentSettings.updatedAt),
     });
 
-    return NextResponse.json(settings || null);
+    // Tell the shop whether automatic MudahPay QR checkout is active.
+    // Admin controls this via the Integrations page toggle.
+    const mp = await getIntegration<MudahPayConfig>("mudahpay");
+    const mudahpayEnabled = !!(mp && mp.isEnabled && mp.apiKey);
+
+    return NextResponse.json({ ...(settings || {}), mudahpayEnabled });
   } catch (error) {
     console.error("Error fetching payment settings:", error);
     return NextResponse.json(

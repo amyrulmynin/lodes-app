@@ -142,7 +142,14 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
     e.preventDefault();
     if (!selectedDessert) return;
 
-    // Try MudahPay QR payment first (if enabled). Fallback to manual payment.
+    // If MudahPay is NOT enabled by admin -> manual receipt upload flow.
+    if (!paymentSettings?.mudahpayEnabled) {
+      setShowPayment(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // MudahPay IS enabled -> create order + generate DuitNow QR.
     setPaymentLoading(true);
     setPayment(null);
     setPaymentPaid(false);
@@ -183,7 +190,11 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
         setShowPayment(true);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        // MudahPay not configured -> manual payment flow
+        // QR generation failed -> tell customer, fallback to manual
+        console.warn("MudahPay QR failed:", payData?.error || payRes.status);
+        alert(
+          "Pembayaran QR tidak dapat dijana sekarang. Sila guna kaedah manual di bawah."
+        );
         setShowPayment(true);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }

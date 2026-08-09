@@ -3,25 +3,12 @@ const ws = require("ws");
 neonConfig.webSocketConstructor = ws;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 (async () => {
-  await pool.query(`CREATE TABLE IF NOT EXISTS ingredients (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    unit TEXT NOT NULL DEFAULT 'pcs',
-    current_stock NUMERIC(10,2) NOT NULL DEFAULT 0,
-    min_stock_level NUMERIC(10,2) NOT NULL DEFAULT 0,
-    cost_per_unit NUMERIC(10,2),
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-  )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS stock_movements (
-    id SERIAL PRIMARY KEY,
-    ingredient_id INTEGER NOT NULL REFERENCES ingredients(id),
-    type TEXT NOT NULL,
-    quantity NUMERIC(10,2) NOT NULL,
-    note TEXT,
-    receipt_url TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
-  )`);
-  console.log("stock tables created");
+  // check payment_method column type + enum values
+  const col = await pool.query("SELECT data_type, udt_name FROM information_schema.columns WHERE table_name='orders' AND column_name='payment_method'");
+  console.log("payment_method:", JSON.stringify(col.rows));
+  if (col.rows[0] && col.rows[0].udt_name !== 'text') {
+    const en = await pool.query(`SELECT enumlabel FROM pg_enum e JOIN pg_type t ON e.enumtypid=t.oid WHERE t.typname=$1`, [col.rows[0].udt_name]);
+    console.log("enum values:", en.rows.map(r=>r.enumlabel).join(", "));
+  }
   await pool.end();
 })().catch(e => { console.error("ERR:", e.message); process.exit(1); });
