@@ -45,6 +45,7 @@ sqlite.exec(`
     customer_address TEXT,
     notes TEXT,
     receipt_url TEXT,
+    feedback_token TEXT UNIQUE,
     status TEXT NOT NULL DEFAULT 'pending',
     submitted_at INTEGER NOT NULL,
     processed_at INTEGER,
@@ -67,6 +68,18 @@ sqlite.exec(`
     notes TEXT
   );
 
+
+  CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL UNIQUE REFERENCES orders(id),
+    affiliate_id INTEGER NOT NULL REFERENCES users(id),
+    dessert_id INTEGER NOT NULL REFERENCES desserts(id),
+    customer_name TEXT NOT NULL,
+    rating INTEGER NOT NULL,
+    comment TEXT,
+    is_visible INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL
+  );
   CREATE TABLE IF NOT EXISTS payment_settings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     qr_code_url TEXT,
@@ -126,3 +139,4 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+

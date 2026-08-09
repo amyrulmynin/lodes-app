@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Upload as UploadIcon,
   CakeSlice,
+  Star,
   BadgeCheck,
   Loader2,
 } from "lucide-react";
@@ -27,12 +28,21 @@ interface Dessert {
   commissionRate: string;
 }
 
+interface Review {
+  id: number;
+  customerName: string;
+  rating: number;
+  comment: string | null;
+  dessertName: string;
+}
+
 interface PublicShopProps {
   affiliateId: string;
 }
 
 export function PublicShop({ affiliateId }: PublicShopProps) {
   const [desserts, setDesserts] = useState<Dessert[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [affiliate, setAffiliate] = useState<any>(null);
   const [paymentSettings, setPaymentSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -59,19 +69,23 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
 
   const fetchData = async () => {
     try {
-      const [dessertsRes, affiliateRes, paymentRes] = await Promise.all([
-        fetch("/api/desserts"),
-        fetch(`/api/public/affiliate/${affiliateId}`),
-        fetch("/api/payment-settings"),
-      ]);
+      const [dessertsRes, affiliateRes, paymentRes, reviewsRes] =
+        await Promise.all([
+          fetch("/api/desserts"),
+          fetch(`/api/public/affiliate/${affiliateId}`),
+          fetch("/api/payment-settings"),
+          fetch("/api/public/reviews"),
+        ]);
 
       const dessertsData = await dessertsRes.json();
       const affiliateData = await affiliateRes.json();
       const paymentData = await paymentRes.json();
+      const reviewsData = reviewsRes.ok ? await reviewsRes.json() : [];
 
       setDesserts(dessertsData);
       setAffiliate(affiliateData);
       setPaymentSettings(paymentData);
+      setReviews(Array.isArray(reviewsData) ? reviewsData : []);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -677,6 +691,57 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
         )}
       </div>
 
+      {/* Testimonials */}
+      {!selectedDessert && !orderSuccess && reviews.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold tracking-tight text-ink-950">
+              Apa Kata Customer Kami
+            </h2>
+            <p className="text-ink-500 mt-1">
+              Review jujur daripada pelanggan sebenar
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {reviews.slice(0, 6).map((review) => (
+              <Card key={review.id} className="hover:shadow-lift">
+                <CardContent className="pt-6">
+                  <div className="flex gap-0.5 mb-3">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        className={`h-4 w-4 ${
+                          s <= review.rating
+                            ? "fill-primary-500 text-primary-500"
+                            : "text-ink-200"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  {review.comment && (
+                    <p className="text-sm text-ink-700 leading-relaxed mb-4">
+                      &ldquo;{review.comment}&rdquo;
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 pt-3 border-t border-ink-100">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink-950 text-primary-400 font-bold text-sm">
+                      {review.customerName.charAt(0).toUpperCase()}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-ink-950">
+                        {review.customerName}
+                      </p>
+                      <p className="text-xs text-ink-400">
+                        {review.dessertName}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Footer */}
       <div className="bg-ink-950 text-white py-10 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -698,3 +763,6 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
     </div>
   );
 }
+
+
+

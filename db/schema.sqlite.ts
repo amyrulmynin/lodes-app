@@ -38,6 +38,7 @@ export const orders = sqliteTable("orders", {
   customerAddress: text("customer_address"),
   notes: text("notes"),
   receiptUrl: text("receipt_url"),
+  feedbackToken: text("feedback_token").unique(),
   status: text("status", { enum: ["pending", "accepted", "rejected"] }).notNull().default("pending"),
   submittedAt: integer("submitted_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   processedAt: integer("processed_at", { mode: "timestamp" }),
@@ -68,4 +69,17 @@ export const paymentSettings = sqliteTable("payment_settings", {
   accountHolder: text("account_holder"),
   paymentInstructions: text("payment_instructions"),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+
+export const reviews = sqliteTable("reviews", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  orderId: integer("order_id").notNull().references(() => orders.id).unique(),
+  affiliateId: integer("affiliate_id").notNull().references(() => users.id),
+  dessertId: integer("dessert_id").notNull().references(() => desserts.id),
+  customerName: text("customer_name").notNull(),
+  rating: integer("rating").notNull(),
+  comment: text("comment"),
+  isVisible: integer("is_visible").notNull().default(1),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });

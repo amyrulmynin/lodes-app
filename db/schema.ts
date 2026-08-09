@@ -43,6 +43,7 @@ export const orders = pgTable("orders", {
   customerAddress: text("customer_address"),
   notes: text("notes"),
   receiptUrl: text("receipt_url"),
+  feedbackToken: text("feedback_token").unique(),
   status: orderStatusEnum("status").notNull().default('pending'),
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
   processedAt: timestamp("processed_at"),
@@ -109,3 +110,31 @@ export const paymentSettings = pgTable("payment_settings", {
   paymentInstructions: text("payment_instructions"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id).unique(),
+  affiliateId: integer("affiliate_id").notNull().references(() => users.id),
+  dessertId: integer("dessert_id").notNull().references(() => desserts.id),
+  customerName: text("customer_name").notNull(),
+  rating: integer("rating").notNull(),
+  comment: text("comment"),
+  isVisible: integer("is_visible").notNull().default(1),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  order: one(orders, {
+    fields: [reviews.orderId],
+    references: [orders.id],
+  }),
+  dessert: one(desserts, {
+    fields: [reviews.dessertId],
+    references: [desserts.id],
+  }),
+  affiliate: one(users, {
+    fields: [reviews.affiliateId],
+    references: [users.id],
+  }),
+}));

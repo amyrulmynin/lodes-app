@@ -10,6 +10,7 @@ import {
   type InvoicePaymentSettings,
 } from "@/lib/invoice-generator";
 import { StatusBadge } from "./financial-overview";
+import { FeedbackActions } from "./feedback-actions";
 
 interface Order {
   id: number;
@@ -243,6 +244,7 @@ export function OrdersManager() {
                     <FileText className="h-4 w-4 mr-2" />
                     Invoice
                   </Button>
+                    <FeedbackActions orderId={order.id} orderStatus={order.status} />
                   {order.status === "pending" && (
                     <>
                       <Button
@@ -285,3 +287,7 @@ export function OrdersManager() {
     </div>
   );
 }
+
+
+
+

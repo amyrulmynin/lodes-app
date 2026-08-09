@@ -13,6 +13,7 @@ import {
   Users,
   ShoppingCart,
   Wallet,
+  MessageSquareQuote,
   CreditCard,
   Menu,
   X,
@@ -28,6 +29,7 @@ const mainMenu = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/invoices", label: "Invoices", icon: FileText },
   { href: "/transactions", label: "Transaksi", icon: ArrowLeftRight },
+  { href: "/admin/reviews", label: "Reviews", icon: MessageSquareQuote },
 ];
 
 const manageMenu = [
@@ -166,3 +168,4 @@ export function AdminSidebar({ userName }: AdminSidebarProps) {
     </>
   );
 }
+
