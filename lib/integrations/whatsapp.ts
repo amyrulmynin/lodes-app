@@ -1,3 +1,19 @@
+// Emoji written as unicode escapes so they survive any file encoding.
+const E = {
+  star: "⭐",
+  cake: "\u{1F370}",
+  box: "\u{1F4E6}",
+  chart: "\u{1F4CA}",
+  money: "\u{1F4B0}",
+  person: "\u{1F464}",
+  people: "\u{1F465}",
+  phone: "\u{1F4F1}",
+  memo: "\u{1F4DD}",
+  cart: "\u{1F6D2}",
+  speech: "\u{1F4AC}",
+  pray: "\u{1F64F}",
+};
+
 export async function sendWhatsAppNotification(orderData: {
   customerName: string;
   customerPhone: string;
@@ -14,21 +30,21 @@ export async function sendWhatsAppNotification(orderData: {
   }
 
   const message = `
-🍰 *ORDER BARU LODES*
+${E.cake} *ORDER BARU LODES*
 
-📦 *Dessert:* ${orderData.dessertName}
-📊 *Kuantiti:* ${orderData.quantity}
-💰 *Jumlah:* RM ${orderData.totalPrice}
+${E.box} *Dessert:* ${orderData.dessertName}
+${E.chart} *Kuantiti:* ${orderData.quantity}
+${E.money} *Jumlah:* RM ${orderData.totalPrice}
 
-👤 *Customer:*
+${E.person} *Customer:*
 Nama: ${orderData.customerName}
 Telefon: ${orderData.customerPhone}
 ${orderData.customerAddress ? `Alamat: ${orderData.customerAddress}` : ""}
 
-👥 *Affiliate:* ${orderData.affiliateName}
-${orderData.notes ? `\n📝 *Nota:* ${orderData.notes}` : ""}
+${E.people} *Affiliate:* ${orderData.affiliateName}
+${orderData.notes ? `\n${E.memo} *Nota:* ${orderData.notes}` : ""}
 
-Terima kasih! 🙏
+Terima kasih! ${E.pray}
   `.trim();
 
   try {
@@ -69,18 +85,18 @@ export async function sendReviewNotification(reviewData: {
     return;
   }
 
-  const stars = "\u2B50".repeat(reviewData.rating);
+  const stars = E.star.repeat(reviewData.rating);
 
   const message = `
-⭐ *REVIEW BARU LODES*
+${E.star} *REVIEW BARU LODES*
 
-👤 *Customer:* ${reviewData.customerName}
-${reviewData.customerPhone ? `📱 *WhatsApp:* ${reviewData.customerPhone}` : ""}
-${reviewData.dessertName ? `🍰 *Dessert:* ${reviewData.dessertName}` : ""}
-${reviewData.source === "manual" ? "📝 *Sumber:* Manual (link statik)" : "🛒 *Sumber:* Order"}
+${E.person} *Customer:* ${reviewData.customerName}
+${reviewData.customerPhone ? `${E.phone} *WhatsApp:* ${reviewData.customerPhone}` : ""}
+${reviewData.dessertName ? `${E.cake} *Dessert:* ${reviewData.dessertName}` : ""}
+${reviewData.source === "manual" ? `${E.memo} *Sumber:* Manual (link statik)` : `${E.cart} *Sumber:* Order`}
 
 *Rating:* ${stars} (${reviewData.rating}/5)
-${reviewData.comment ? `\n💬 *Komen:* ${reviewData.comment}` : ""}
+${reviewData.comment ? `\n${E.speech} *Komen:* ${reviewData.comment}` : ""}
 
 Semak di Admin > Reviews.
   `.trim();
