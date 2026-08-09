@@ -60,7 +60,9 @@ export async function POST(request: NextRequest) {
       "",
       "Terima kasih!",
     ];
-    const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(
+    // Use api.whatsapp.com/send which handles UTF-8 emoji more reliably
+    // than wa.me on some devices
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(
       lines.join("\n")
     )}`;
 
