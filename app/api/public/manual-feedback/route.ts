@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const lines = [
       `Hi Lodes Desserts! Saya ${name.trim()}.`,
       "",
-      `Rating: ${stars} (${ratingNum}/5)`,
+      `Rating: ${stars} ${ratingNum}/5 bintang`,
       comment?.trim() ? `Komen: ${comment.trim()}` : "",
       "",
       "Terima kasih!",
