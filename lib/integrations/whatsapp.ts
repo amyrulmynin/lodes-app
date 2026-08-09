@@ -85,7 +85,8 @@ export async function sendReviewNotification(reviewData: {
     return;
   }
 
-  const stars = E.star.repeat(reviewData.rating);
+  // Repeated emoji breaks on some devices; use single star + text
+  const stars = `${reviewData.rating}/5 ⭐`;
 
   const message = `
 ${E.star} *REVIEW BARU LODES*
@@ -95,7 +96,7 @@ ${reviewData.customerPhone ? `${E.phone} *WhatsApp:* ${reviewData.customerPhone}
 ${reviewData.dessertName ? `${E.cake} *Dessert:* ${reviewData.dessertName}` : ""}
 ${reviewData.source === "manual" ? `${E.memo} *Sumber:* Manual (link statik)` : `${E.cart} *Sumber:* Order`}
 
-*Rating:* ${stars} (${reviewData.rating}/5)
+*Rating:* ${stars}
 ${reviewData.comment ? `\n${E.speech} *Komen:* ${reviewData.comment}` : ""}
 
 Semak di Admin > Reviews.

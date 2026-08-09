@@ -50,12 +50,13 @@ export async function POST(request: NextRequest) {
       source: "manual",
     }).catch((e) => console.error("Review notify failed:", e));
 
-    // Build WhatsApp share message for the customer (hardcoded ⭐ literal)
-    const stars = "⭐".repeat(ratingNum);
+    // Build WhatsApp share message for the customer.
+    // NOTE: repeated emoji (⭐⭐⭐⭐⭐) breaks as "?????" on some devices
+    // when opened via wa.me links, so we use a single ⭐ + clear text.
     const lines = [
       `Hi Lodes Desserts! Saya ${name.trim()}.`,
       "",
-      `Rating: ${stars} ${ratingNum}/5 bintang`,
+      `Rating: ${ratingNum}/5 bintang ⭐`,
       comment?.trim() ? `Komen: ${comment.trim()}` : "",
       "",
       "Terima kasih!",
