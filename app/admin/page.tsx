@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { Navbar } from "@/components/navbar";
+import { AdminSidebar } from "@/components/admin-sidebar";
 import { AdminDashboard } from "@/components/admin/dashboard";
 
 export default async function AdminPage() {
@@ -16,8 +16,10 @@ export default async function AdminPage() {
 
   return (
     <div className="min-h-dvh bg-ink-50">
-      <Navbar userName={session.user.name || session.user.email || ""} role="admin" />
-      <AdminDashboard />
+      <AdminSidebar userName={session.user.name || session.user.email || ""} />
+      <div className="lg:pl-64">
+        <AdminDashboard />
+      </div>
     </div>
   );
 }

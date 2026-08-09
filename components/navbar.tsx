@@ -1,14 +1,8 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  LogOut,
-  LayoutDashboard,
-  FileText,
-  CakeSlice,
-  ArrowLeftRight,
-} from "lucide-react";
+import { LogOut, CakeSlice } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
 
@@ -19,7 +13,6 @@ interface NavbarProps {
 
 export function Navbar({ userName, role }: NavbarProps) {
   const router = useRouter();
-  const pathname = usePathname();
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
@@ -27,17 +20,6 @@ export function Navbar({ userName, role }: NavbarProps) {
   };
 
   const dashboardPath = role === "admin" ? "/admin" : "/affiliate";
-
-  const menuItems = [
-    { href: dashboardPath, label: "Dashboard", icon: LayoutDashboard },
-    // Invoices & Transactions are admin-only
-    ...(role === "admin"
-      ? [
-          { href: "/invoices", label: "Invoices", icon: FileText },
-          { href: "/transactions", label: "Transaksi", icon: ArrowLeftRight },
-        ]
-      : []),
-  ];
 
   return (
     <nav className="sticky top-0 z-50 bg-ink-950 text-white">
@@ -69,31 +51,6 @@ export function Navbar({ userName, role }: NavbarProps) {
               Logout
             </Button>
           </div>
-        </div>
-
-        {/* Menu bar */}
-        <div className="flex gap-1 pb-3">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                  isActive
-                    ? "text-primary-400 bg-white/10"
-                    : "text-ink-300 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <Icon className="h-4 w-4" strokeWidth={2} />
-                {item.label}
-                {isActive && (
-                  <span className="absolute inset-x-3 -bottom-[13px] h-0.5 rounded-full bg-primary-500" />
-                )}
-              </Link>
-            );
-          })}
         </div>
       </div>
     </nav>
