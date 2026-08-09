@@ -3,6 +3,9 @@ import { db } from "@/db";
 import { orders } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET /api/public/track/[token] - customer order tracking (no auth)
 export async function GET(
   request: NextRequest,

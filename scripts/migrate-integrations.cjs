@@ -3,11 +3,7 @@ const ws = require("ws");
 neonConfig.webSocketConstructor = ws;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 (async () => {
-  await pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS latitude NUMERIC(10,7)");
-  await pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS longitude NUMERIC(10,7)");
-  await pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS location_accuracy NUMERIC(10,2)");
-  await pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_token TEXT");
-  await pool.query("CREATE UNIQUE INDEX IF NOT EXISTS orders_tracking_token_unique ON orders(tracking_token)");
-  console.log("location columns added");
+  const r = await pool.query("SELECT id, status, payment_status, tracking_token FROM orders WHERE id=30");
+  console.log(JSON.stringify(r.rows));
   await pool.end();
 })().catch(e => { console.error("ERR:", e.message); process.exit(1); });

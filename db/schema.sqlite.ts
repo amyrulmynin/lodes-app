@@ -47,7 +47,7 @@ export const orders = sqliteTable("orders", {
   longitude: text("longitude"),
   locationAccuracy: text("location_accuracy"),
   trackingToken: text("tracking_token").unique(),
-  status: text("status", { enum: ["pending", "accepted", "rejected"] }).notNull().default("pending"),
+  status: text("status", { enum: ["pending", "accepted", "rejected", "out_for_delivery", "delivered"] }).notNull().default("pending"),
   submittedAt: integer("submitted_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   processedAt: integer("processed_at", { mode: "timestamp" }),
   processedBy: integer("processed_by").references(() => users.id),

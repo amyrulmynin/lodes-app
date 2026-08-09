@@ -18,7 +18,8 @@ export async function PATCH(
     const body = await request.json();
     const { status } = body;
 
-    if (!status || !['accepted', 'rejected'].includes(status)) {
+    const validStatuses = ['accepted', 'rejected', 'out_for_delivery', 'delivered'];
+    if (!status || !validStatuses.includes(status)) {
       return NextResponse.json(
         { error: "Invalid status" },
         { status: 400 }
@@ -36,7 +37,7 @@ export async function PATCH(
     const updatedOrder = await db
       .update(orders)
       .set({
-        status: status as 'accepted' | 'rejected',
+        status: status as 'accepted' | 'rejected' | 'out_for_delivery' | 'delivered',
         processedAt: new Date(),
         processedBy: parseInt(session.user.id),
       })

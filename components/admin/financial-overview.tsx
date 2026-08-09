@@ -61,14 +61,23 @@ export function StatusBadge({ status }: { status: string }) {
     accepted: "bg-emerald-50 text-emerald-700",
     pending: "bg-primary-100 text-primary-800",
     rejected: "bg-red-50 text-red-700",
+    out_for_delivery: "bg-blue-50 text-blue-700",
+    delivered: "bg-emerald-100 text-emerald-800",
+  };
+  const labels: Record<string, string> = {
+    pending: "Pending",
+    accepted: "Accepted",
+    rejected: "Rejected",
+    out_for_delivery: "Dihantar",
+    delivered: "Sampai",
   };
   return (
     <span
-      className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
+      className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${
         styles[status] || "bg-ink-100 text-ink-600"
       }`}
     >
-      {status}
+      {labels[status] || status}
     </span>
   );
 }

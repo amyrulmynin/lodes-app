@@ -2,7 +2,7 @@ import { pgTable, text, serial, timestamp, integer, decimal, pgEnum } from "driz
 import { relations } from "drizzle-orm";
 
 export const roleEnum = pgEnum('role', ['admin', 'affiliate']);
-export const orderStatusEnum = pgEnum('order_status', ['pending', 'accepted', 'rejected']);
+export const orderStatusEnum = pgEnum('order_status', ['pending', 'accepted', 'rejected', 'out_for_delivery', 'delivered']);
 export const withdrawalStatusEnum = pgEnum('withdrawal_status', ['pending', 'accepted', 'rejected']);
 
 export const users = pgTable("users", {

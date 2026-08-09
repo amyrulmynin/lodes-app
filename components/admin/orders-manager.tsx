@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X, FileText, MapPin } from "lucide-react";
+import { Check, X, FileText, MapPin, Truck, PackageCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -82,7 +82,7 @@ export function OrdersManager() {
 
   const handleUpdateStatus = async (
     orderId: number,
-    status: "accepted" | "rejected"
+    status: "accepted" | "rejected" | "out_for_delivery" | "delivered"
   ) => {
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
@@ -290,6 +290,30 @@ export function OrdersManager() {
                         Tolak
                       </Button>
                     </>
+                  )}
+
+                  {/* Delivery progression */}
+                  {order.status === "accepted" && (
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        handleUpdateStatus(order.id, "out_for_delivery")
+                      }
+                      className="bg-primary-500 text-ink-950 hover:bg-primary-400"
+                    >
+                      <Truck className="h-4 w-4 mr-2" />
+                      Hantar
+                    </Button>
+                  )}
+                  {order.status === "out_for_delivery" && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleUpdateStatus(order.id, "delivered")}
+                      className="bg-emerald-600 text-white hover:bg-emerald-700"
+                    >
+                      <PackageCheck className="h-4 w-4 mr-2" />
+                      Sampai
+                    </Button>
                   )}
                 </div>
               </div>
