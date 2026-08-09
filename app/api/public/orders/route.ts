@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
       customerAddress: customerAddress || null,
       notes: notes || null,
       receiptUrl: receiptUrl || null,
+      paymentMethod: body.paymentMethod || null,
       status: 'pending',
     }).returning();
 

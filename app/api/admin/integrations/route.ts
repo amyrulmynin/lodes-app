@@ -10,7 +10,7 @@ import {
   type TelegramConfig,
   type MudahPayConfig,
 } from "@/lib/integrations/config";
-import { testTelegram } from "@/lib/integrations/telegram";
+import { testTelegram, setupTelegramWebhook } from "@/lib/integrations/telegram";
 import { testAi } from "@/lib/integrations/ai";
 import { testMudahPay } from "@/lib/integrations/mudahpay";
 
@@ -50,6 +50,21 @@ export async function PUT(request: NextRequest) {
     }
 
     await saveIntegration(key as IntegrationKey, config || {}, !!isEnabled);
+
+    // After saving telegram, auto-register the webhook so the bot receives
+    // receipt photos at /api/webhooks/telegram
+    if (key === "telegram" && isEnabled) {
+      const stored = (await getIntegration("telegram")) as any;
+      const origin = request.nextUrl.origin;
+      if (stored?.botToken) {
+        const wh = await setupTelegramWebhook(
+          stored.botToken,
+          `${origin}/api/webhooks/telegram`
+        );
+        if (!wh.ok) console.error("Telegram webhook setup:", wh.error);
+      }
+    }
+
     const masked = await getIntegrationMasked(key as IntegrationKey);
     return NextResponse.json({ success: true, config: masked });
   } catch (error) {

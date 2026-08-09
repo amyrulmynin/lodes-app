@@ -10,9 +10,11 @@ import {
   MessageSquare,
   Upload as UploadIcon,
   CakeSlice,
-  Star,
   BadgeCheck,
   Loader2,
+  Star,
+  QrCode,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +64,49 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
   const [uploadError, setUploadError] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
+  // MudahPay QR payment state
+  const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+  const [payment, setPayment] = useState<{
+    qrImage: string | null;
+    uniqueAmount: number | null;
+  } | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentPaid, setPaymentPaid] = useState(false);
+
+  // Poll payment status while QR is shown
+  useEffect(() => {
+    if (!createdOrderId || !payment || paymentPaid) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/public/payment?orderId=${createdOrderId}`);
+        const data = await res.json();
+        if (data.status === "paid") {
+          setPaymentPaid(true);
+          clearInterval(interval);
+          setTimeout(() => {
+            setOrderSuccess(true);
+            setShowPayment(false);
+            setSelectedDessert(null);
+            setPayment(null);
+            setCreatedOrderId(null);
+            setFormData({
+              quantity: "1",
+              customerName: "",
+              customerPhone: "",
+              customerAddress: "",
+              notes: "",
+              receiptUrl: "",
+            });
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }, 2500);
+        }
+      } catch (e) {
+        // silent
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [createdOrderId, payment, paymentPaid]);
+
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,9 +138,61 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
     }
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowPayment(true);
+    if (!selectedDessert) return;
+
+    // Try MudahPay QR payment first (if enabled). Fallback to manual payment.
+    setPaymentLoading(true);
+    setPayment(null);
+    setPaymentPaid(false);
+    try {
+      // 1. Create the order
+      const orderRes = await fetch("/api/public/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          affiliateId: parseInt(affiliateId),
+          dessertId: selectedDessert.id,
+          quantity: parseInt(formData.quantity),
+          customerName: formData.customerName,
+          customerPhone: formData.customerPhone,
+          customerAddress: formData.customerAddress,
+          notes: formData.notes,
+          paymentMethod: "mudahpay",
+        }),
+      });
+
+      if (!orderRes.ok) throw new Error("order failed");
+      const order = await orderRes.json();
+
+      // 2. Request a MudahPay QR for this order
+      const payRes = await fetch("/api/public/payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id }),
+      });
+      const payData = await payRes.json();
+
+      if (payRes.ok && payData.qrImage) {
+        setCreatedOrderId(order.id);
+        setPayment({
+          qrImage: payData.qrImage,
+          uniqueAmount: payData.uniqueAmount ?? null,
+        });
+        setShowPayment(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        // MudahPay not configured -> manual payment flow
+        setShowPayment(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } catch (err) {
+      console.error(err);
+      setShowPayment(true);
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -462,7 +559,65 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
-                {paymentSettings.qrCodeUrl && (
+                {/* MudahPay DuitNow QR */}
+                {payment && payment.qrImage && (
+                  <div className="bg-ink-950 text-white rounded-xl p-6 relative overflow-hidden">
+                    <div
+                      aria-hidden
+                      className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-primary-500/20 blur-2xl pointer-events-none"
+                    />
+                    <div className="relative">
+                      <h3 className="font-semibold text-lg flex items-center gap-2 mb-1">
+                        <Smartphone className="h-5 w-5 text-primary-400" />
+                        Bayar dengan DuitNow QR
+                      </h3>
+                      <p className="text-sm text-ink-300 mb-4">
+                        Scan guna mana-mana app bank atau e-wallet
+                      </p>
+
+                      {paymentPaid ? (
+                        <div className="text-center py-8 animate-fade-up">
+                          <CheckCircle className="h-16 w-16 text-emerald-400 mx-auto mb-3" />
+                          <p className="text-xl font-bold text-emerald-400">
+                            Pembayaran Diterima!
+                          </p>
+                          <p className="text-sm text-ink-300 mt-1">
+                            Terima kasih. Order anda sedang diproses.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="bg-white rounded-xl p-4 max-w-[280px] mx-auto">
+                            <img
+                              src={payment.qrImage}
+                              alt="DuitNow QR"
+                              className="w-full rounded-lg"
+                            />
+                          </div>
+                          <div className="text-center mt-4">
+                            <p className="text-xs text-ink-400">
+                              Jumlah perlu dibayar
+                            </p>
+                            <p className="text-3xl font-bold text-primary-400 tabular-nums">
+                              {payment.uniqueAmount
+                                ? formatCurrency(
+                                    (payment.uniqueAmount / 100).toString()
+                                  )
+                                : formatCurrency(calculateTotal().toString())}
+                            </p>
+                            <p className="text-xs text-ink-400 mt-2 flex items-center justify-center gap-2">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Menunggu pembayaran... (auto detect)
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Manual payment methods (only if no MudahPay QR) */}
+                {!payment && paymentSettings.qrCodeUrl && (
                   <div className="bg-white border border-ink-200/70 rounded-xl p-6">
                     <h3 className="font-semibold text-ink-950 mb-4 text-lg">
                       1. Scan QR Code untuk Bayar
@@ -477,7 +632,7 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
                   </div>
                 )}
 
-                {paymentSettings.bankName && (
+                {!payment && paymentSettings.bankName && (
                   <div className="bg-ink-50 border border-ink-200/70 rounded-xl p-6">
                     <h3 className="font-semibold text-ink-950 mb-4 text-lg">
                       {paymentSettings.qrCodeUrl
@@ -507,7 +662,7 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
                   </div>
                 )}
 
-                {paymentSettings.paymentInstructions && (
+                {paymentSettings.paymentInstructions && !payment && (
                   <div className="bg-primary-50 border border-primary-200/60 rounded-xl p-4">
                     <p className="text-sm text-ink-700">
                       {paymentSettings.paymentInstructions}
@@ -515,6 +670,8 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
                   </div>
                 )}
 
+                {/* Manual receipt upload (only when NOT using MudahPay) */}
+                {!payment && (
                 <div className="bg-white border border-ink-200/70 rounded-xl p-6">
                   <h3 className="font-semibold text-ink-950 mb-4 text-lg flex items-center gap-2">
                     <UploadIcon className="h-5 w-5 text-ink-400" />
@@ -609,30 +766,39 @@ export function PublicShop({ affiliateId }: PublicShopProps) {
                     </div>
                   </div>
                 </div>
+                )}
 
+                {/* Action buttons */}
                 <div className="flex gap-2">
-                  <Button
-                    onClick={handleFinalSubmit}
-                    disabled={submitting}
-                    size="lg"
-                    className="flex-1"
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      "Submit Order"
-                    )}
-                  </Button>
+                  {!payment && (
+                    <Button
+                      onClick={handleFinalSubmit}
+                      disabled={submitting}
+                      size="lg"
+                      className="flex-1"
+                    >
+                      {submitting ? (
+                        <>
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        "Submit Order"
+                      )}
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant="outline"
                     size="lg"
-                    onClick={() => setShowPayment(false)}
+                    className={payment ? "flex-1" : ""}
+                    onClick={() => {
+                      setShowPayment(false);
+                      setPayment(null);
+                      setCreatedOrderId(null);
+                    }}
                   >
-                    Back
+                    {payment ? "Batal" : "Back"}
                   </Button>
                 </div>
               </CardContent>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { orders } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import QRCode from "qrcode";
 import {
   createMudahPayTransaction,
   getMudahPayTransaction,
@@ -52,9 +53,20 @@ export async function POST(request: NextRequest) {
       })
       .where(eq(orders.id, order.id));
 
+    // Render the DuitNow QR string as a scannable QR image
+    let qrImage: string | null = null;
+    if (result.qrString) {
+      qrImage = await QRCode.toDataURL(result.qrString, {
+        width: 400,
+        margin: 2,
+        color: { dark: "#141412", light: "#ffffff" },
+      });
+    }
+
     return NextResponse.json({
       transactionId: result.transactionId,
       qrString: result.qrString,
+      qrImage,
       uniqueAmount: result.uniqueAmount,
     });
   } catch (error) {

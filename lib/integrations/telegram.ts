@@ -110,6 +110,28 @@ export async function testTelegram(
   }
 }
 
+// Register the webhook so the bot receives receipt photos
+export async function setupTelegramWebhook(
+  botToken: string,
+  webhookUrl: string
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(
+      `https://api.telegram.org/bot${botToken}/setWebhook`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: webhookUrl }),
+      }
+    );
+    const data = await res.json();
+    if (!data.ok) return { ok: false, error: data.description };
+    return { ok: true };
+  } catch (error: any) {
+    return { ok: false, error: error?.message };
+  }
+}
+
 // ===== Specific notification builders =====
 
 export async function telegramNewOrder(o: {
