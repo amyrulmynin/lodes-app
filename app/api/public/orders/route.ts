@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
       longitude: body.longitude != null ? String(body.longitude) : null,
       locationAccuracy: body.locationAccuracy != null ? String(body.locationAccuracy) : null,
       trackingToken: crypto.randomBytes(20).toString("hex"),
+      driverToken: crypto.randomBytes(20).toString("hex"),
       status: 'pending',
     }).returning();
 

@@ -52,6 +52,7 @@ export const orders = pgTable("orders", {
   longitude: decimal("longitude", { precision: 10, scale: 7 }),
   locationAccuracy: decimal("location_accuracy", { precision: 10, scale: 2 }),
   trackingToken: text("tracking_token").unique(),
+  driverToken: text("driver_token").unique(),
   status: orderStatusEnum("status").notNull().default('pending'),
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
   processedAt: timestamp("processed_at"),
@@ -177,5 +178,14 @@ export const stockMovements = pgTable("stock_movements", {
   quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
   note: text("note"),
   receiptUrl: text("receipt_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const deliveryLocations = pgTable("delivery_locations", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+  accuracy: decimal("accuracy", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

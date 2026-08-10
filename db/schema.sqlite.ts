@@ -47,6 +47,7 @@ export const orders = sqliteTable("orders", {
   longitude: text("longitude"),
   locationAccuracy: text("location_accuracy"),
   trackingToken: text("tracking_token").unique(),
+  driverToken: text("driver_token").unique(),
   status: text("status", { enum: ["pending", "accepted", "rejected", "out_for_delivery", "delivered"] }).notNull().default("pending"),
   submittedAt: integer("submitted_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   processedAt: integer("processed_at", { mode: "timestamp" }),
@@ -122,5 +123,14 @@ export const stockMovements = sqliteTable("stock_movements", {
   quantity: text("quantity").notNull(),
   note: text("note"),
   receiptUrl: text("receipt_url"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const deliveryLocations = sqliteTable("delivery_locations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  orderId: integer("order_id").notNull().references(() => orders.id),
+  latitude: text("latitude").notNull(),
+  longitude: text("longitude").notNull(),
+  accuracy: text("accuracy"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });

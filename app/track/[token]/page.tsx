@@ -15,6 +15,15 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import dynamic from "next/dynamic";
+
+const LiveDeliveryMap = dynamic(
+  () =>
+    import("@/components/public/live-delivery-map").then(
+      (m) => m.LiveDeliveryMap
+    ),
+  { ssr: false }
+);
 
 interface TrackedOrder {
   id: number;
@@ -218,6 +227,14 @@ export default function TrackPage() {
                       : order.status === "accepted"
                       ? "Order anda sedang disediakan!"
                       : "Order anda sedang menunggu pengesahan admin."}
+                  </div>
+                )}
+
+                {/* Live driver map (when out for delivery) */}
+                {(order.status === "out_for_delivery" ||
+                  order.status === "delivered") && (
+                  <div className="mt-6 pt-6 border-t border-ink-100">
+                    <LiveDeliveryMap token={token} />
                   </div>
                 )}
 

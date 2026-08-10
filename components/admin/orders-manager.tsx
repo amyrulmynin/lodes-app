@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X, FileText, MapPin, Truck, PackageCheck } from "lucide-react";
+import { Check, X, FileText, MapPin, Truck, PackageCheck, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -24,6 +24,7 @@ interface Order {
   latitude: string | null;
   longitude: string | null;
   locationAccuracy: string | null;
+  driverToken: string | null;
   status: string;
   submittedAt: Date;
   dessert: {
@@ -77,6 +78,20 @@ export function OrdersManager() {
     } catch (error) {
       console.error("Error generating invoice:", error);
       alert("Gagal menjana invoice. Sila cuba lagi.");
+    }
+  };
+
+  const handleShareDriverLink = async (order: Order) => {
+    if (!order.driverToken) {
+      alert("Tiada driver token untuk order ini");
+      return;
+    }
+    const url = `${window.location.origin}/drive/${order.driverToken}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      alert("Link driver disalin! Hantar kepada rider melalui WhatsApp.");
+    } catch {
+      prompt("Copy link driver:", url);
     }
   };
 
@@ -293,6 +308,16 @@ export function OrdersManager() {
                   )}
 
                   {/* Delivery progression */}
+                  {order.status === "accepted" && order.driverToken && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleShareDriverLink(order)}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Link Driver
+                    </Button>
+                  )}
                   {order.status === "accepted" && (
                     <Button
                       size="sm"
