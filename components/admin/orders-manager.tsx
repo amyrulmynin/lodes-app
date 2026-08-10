@@ -25,6 +25,7 @@ interface Order {
   longitude: string | null;
   locationAccuracy: string | null;
   driverToken: string | null;
+  deliveryProofUrl: string | null;
   status: string;
   submittedAt: Date;
   dessert: {
@@ -228,6 +229,20 @@ export function OrdersManager() {
                   <p className="text-sm text-ink-700">
                     {order.customerAddress}
                   </p>
+                </div>
+              )}
+
+              {/* Proof of delivery photo (from rider) */}
+              {order.deliveryProofUrl && (
+                <div className="mb-5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400 mb-2">
+                    Bukti Penghantaran
+                  </p>
+                  <img
+                    src={order.deliveryProofUrl}
+                    alt="Bukti penghantaran"
+                    className="max-w-[200px] rounded-xl border border-ink-200"
+                  />
                 </div>
               )}
 

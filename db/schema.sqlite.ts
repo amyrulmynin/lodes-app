@@ -48,6 +48,7 @@ export const orders = sqliteTable("orders", {
   locationAccuracy: text("location_accuracy"),
   trackingToken: text("tracking_token").unique(),
   driverToken: text("driver_token").unique(),
+  deliveryProofUrl: text("delivery_proof_url"),
   status: text("status", { enum: ["pending", "accepted", "rejected", "out_for_delivery", "delivered"] }).notNull().default("pending"),
   submittedAt: integer("submitted_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   processedAt: integer("processed_at", { mode: "timestamp" }),

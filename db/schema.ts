@@ -53,6 +53,7 @@ export const orders = pgTable("orders", {
   locationAccuracy: decimal("location_accuracy", { precision: 10, scale: 2 }),
   trackingToken: text("tracking_token").unique(),
   driverToken: text("driver_token").unique(),
+  deliveryProofUrl: text("delivery_proof_url"),
   status: orderStatusEnum("status").notNull().default('pending'),
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
   processedAt: timestamp("processed_at"),

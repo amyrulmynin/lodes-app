@@ -11,9 +11,16 @@ import {
   Loader2,
   Navigation,
   XCircle,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import dynamic from "next/dynamic";
+
+const DriverMap = dynamic(
+  () => import("@/components/public/driver-map").then((m) => m.DriverMap),
+  { ssr: false }
+);
 
 interface DriveOrder {
   id: number;
@@ -37,6 +44,10 @@ export default function DrivePage() {
   const [sharing, setSharing] = useState(false);
   const [lastPing, setLastPing] = useState<Date | null>(null);
   const [error, setError] = useState("");
+  const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [proofImage, setProofImage] = useState("");
+  const [proofError, setProofError] = useState("");
+  const [submittingProof, setSubmittingProof] = useState(false);
   const watchId = useRef<number | null>(null);
 
   useEffect(() => {
@@ -56,6 +67,7 @@ export default function DrivePage() {
   }, [token]);
 
   const pushLocation = async (pos: GeolocationPosition) => {
+    setMyPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
     try {
       await fetch(`/api/drive/${token}`, {
         method: "POST",
@@ -115,16 +127,52 @@ export default function DrivePage() {
     setSharing(false);
   };
 
+  const handleProofFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setProofError("");
+    if (!file) {
+      setProofImage("");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setProofError("Hanya gambar dibenarkan");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setProofError("Gambar mestilah < 5MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => setProofImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const handleDelivered = async () => {
+    // Require proof photo
+    if (!proofImage) {
+      setProofError("Sila ambil/upload gambar bukti penghantaran dahulu.");
+      return;
+    }
+    setProofError("");
+    setSubmittingProof(true);
     stopSharing();
     try {
-      await fetch(`/api/drive/${token}/status`, {
+      const res = await fetch(`/api/drive/${token}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "delivered" }),
+        body: JSON.stringify({ status: "delivered", proofImage }),
       });
-      setOrder((o) => (o ? { ...o, status: "delivered" } : o));
-    } catch {}
+      if (res.ok) {
+        setOrder((o) => (o ? { ...o, status: "delivered" } : o));
+      } else {
+        const data = await res.json();
+        setProofError(data.error || "Gagal menandakan sampai");
+      }
+    } catch {
+      setProofError("Ralat rangkaian. Cuba lagi.");
+    } finally {
+      setSubmittingProof(false);
+    }
   };
 
   const destinationUrl =
@@ -210,6 +258,43 @@ export default function DrivePage() {
               </CardContent>
             </Card>
 
+            {/* Live map: rider position + destination */}
+            <Card className="bg-white/5 border-white/10">
+              <CardContent className="pt-5">
+                <p className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary-400" />
+                  Peta Penghantaran
+                </p>
+                <DriverMap
+                  current={myPos}
+                  destination={
+                    order.latitude && order.longitude
+                      ? {
+                          lat: parseFloat(order.latitude),
+                          lng: parseFloat(order.longitude),
+                        }
+                      : null
+                  }
+                />
+                <div className="flex items-center gap-4 text-xs text-ink-400 mt-3">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-3 w-3 rounded-full bg-blue-500 border-2 border-white shadow" />
+                    Anda
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-3 w-3 rounded-full bg-primary-500 border-2 border-ink-950" />
+                    Customer
+                  </span>
+                </div>
+                {!myPos && (
+                  <p className="text-xs text-ink-400 mt-2">
+                    Tekan &quot;Mula Hantar&quot; untuk paparkan lokasi anda pada
+                    peta.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
             {error && (
               <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm">
                 {error}
@@ -256,13 +341,61 @@ export default function DrivePage() {
                     Mula Kongsi Lokasi
                   </Button>
                 )}
+
+                {/* Proof of delivery photo (required before "Sampai") */}
+                <Card className="bg-white/5 border-white/10">
+                  <CardContent className="pt-5">
+                    <p className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
+                      <Camera className="h-4 w-4 text-primary-400" />
+                      Bukti Penghantaran
+                    </p>
+                    <p className="text-xs text-ink-400 mb-3">
+                      Ambil gambar dessert/pesanan yang telah diterima customer
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handleProofFile}
+                      className="w-full px-4 py-3 border-2 border-dashed border-white/20 rounded-xl cursor-pointer bg-white/5 text-sm text-white
+                               file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
+                               file:text-sm file:font-semibold file:bg-primary-500 file:text-ink-950
+                               hover:border-white/40 transition-colors"
+                    />
+                    {proofError && (
+                      <p className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl px-3.5 py-2.5 mt-3">
+                        {proofError}
+                      </p>
+                    )}
+                    {proofImage && (
+                      <div className="mt-3">
+                        <img
+                          src={proofImage}
+                          alt="Bukti penghantaran"
+                          className="w-full max-w-[240px] rounded-xl border border-white/20"
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
                 <Button
                   size="lg"
                   onClick={handleDelivered}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={submittingProof || !proofImage}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50"
                 >
-                  <PackageCheck className="h-5 w-5 mr-2" />
-                  Tandakan Sampai
+                  {submittingProof ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Memproses...
+                    </>
+                  ) : (
+                    <>
+                      <PackageCheck className="h-5 w-5 mr-2" />
+                      Tandakan Sampai
+                    </>
+                  )}
                 </Button>
               </>
             ) : (
