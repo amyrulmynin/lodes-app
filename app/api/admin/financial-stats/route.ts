@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { orders, withdrawals, users } from "@/db/schema";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc, inArray } from "drizzle-orm";
+
+// Statuses that count as real sales (not pending, not rejected)
+const SALES_STATUSES = ["accepted", "out_for_delivery", "delivered"] as const;
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,9 +15,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all accepted orders
+    // Get all completed/in-progress sales orders (accepted + out_for_delivery + delivered)
     const acceptedOrders = await db.query.orders.findMany({
-      where: eq(orders.status, "accepted"),
+      where: inArray(orders.status, [...SALES_STATUSES]),
       with: {
         affiliate: true,
         dessert: true,

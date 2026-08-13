@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Download, RotateCcw } from "lucide-react";
+import { Plus, Trash2, Download, RotateCcw, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,16 +41,35 @@ export function ManualInvoiceForm() {
   const [paymentSettings, setPaymentSettings] =
     useState<InvoicePaymentSettings | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [customers, setCustomers] = useState<
+    { name: string; phone: string; address: string | null }[]
+  >([]);
 
   useEffect(() => {
     setInvoiceNumber(nextInvoiceNumber());
     setInvoiceDate(new Date().toISOString().split("T")[0]);
+
+    // Load past customers for quick-pick
+    fetch("/api/admin/customers")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setCustomers(Array.isArray(data) ? data : []))
+      .catch(() => setCustomers([]));
 
     fetch("/api/payment-settings")
       .then((res) => res.json())
       .then((data) => setPaymentSettings(data || null))
       .catch(() => setPaymentSettings(null));
   }, []);
+
+  const pickCustomer = (phone: string) => {
+    if (!phone) return;
+    const c = customers.find((x) => x.phone === phone);
+    if (c) {
+      setCustomerName(c.name);
+      setCustomerPhone(c.phone);
+      if (c.address) setCustomerAddress(c.address);
+    }
+  };
 
   const updateItem = (index: number, field: keyof ItemRow, value: string) => {
     setItems((prev) =>
@@ -191,6 +210,31 @@ export function ManualInvoiceForm() {
           <h3 className="font-semibold text-ink-900 border-b border-ink-100 pb-2">
             Maklumat Customer
           </h3>
+
+          {/* Quick-pick existing customer */}
+          {customers.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-ink-800 flex items-center gap-1.5">
+                <Users className="h-4 w-4 text-ink-400" />
+                Pilih Customer Sedia Ada
+              </label>
+              <select
+                defaultValue=""
+                onChange={(e) => pickCustomer(e.target.value)}
+                className="flex h-11 w-full rounded-xl border border-ink-200 bg-white px-4 py-2 text-sm text-ink-900 transition-colors focus-visible:outline-none focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-primary-500/40 cursor-pointer"
+              >
+                <option value="" disabled>
+                  -- Pilih untuk auto-isi nama &amp; telefon --
+                </option>
+                {customers.map((c) => (
+                  <option key={c.phone} value={c.phone}>
+                    {c.name} — {c.phone}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-ink-800">
