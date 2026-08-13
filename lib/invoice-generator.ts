@@ -206,6 +206,15 @@ function buildInvoicePDF(params: {
   doc.setTextColor(...darkGray);
   doc.setFontSize(11);
 
+  // Helper: start a new page when content would run into the footer zone
+  const footerReserve = 40; // keep space so footer never overlaps content
+  const ensureSpace = (needed: number) => {
+    if (yPos + needed > pageHeight - footerReserve) {
+      doc.addPage();
+      yPos = 25;
+    }
+  };
+
   for (const item of items) {
     // New page if running out of space
     if (yPos > pageHeight - 70) {
@@ -231,6 +240,7 @@ function buildInvoicePDF(params: {
   doc.line(15, yPos, pageWidth - 15, yPos);
 
   // ===== Total box =====
+  ensureSpace(35);
   yPos += 12;
   doc.setFillColor(0, 0, 0);
   doc.rect(15, yPos - 8, pageWidth - 30, 20, 'F');
@@ -248,6 +258,9 @@ function buildInvoicePDF(params: {
 
   // ===== Notes =====
   if (notes) {
+    const splitNotes = doc.splitTextToSize(notes, pageWidth - 40);
+    ensureSpace(16 + splitNotes.length * 5);
+
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
     doc.setFont('helvetica', 'normal');
@@ -256,7 +269,6 @@ function buildInvoicePDF(params: {
     yPos += 6;
     doc.setFontSize(10);
     doc.setTextColor(...darkGray);
-    const splitNotes = doc.splitTextToSize(notes, pageWidth - 40);
     doc.text(splitNotes, 20, yPos);
     yPos += splitNotes.length * 5 + 8;
   }
@@ -270,6 +282,20 @@ function buildInvoicePDF(params: {
       paymentSettings.paymentInstructions);
 
   if (hasPaymentInfo) {
+    // Estimate height of the whole payment block, then break page if needed
+    let blockHeight = 22; // header + spacing
+    if (paymentSettings.bankName) blockHeight += 6;
+    if (paymentSettings.accountNumber) blockHeight += 6;
+    if (paymentSettings.accountHolder) blockHeight += 6;
+    if (paymentSettings.paymentInstructions) {
+      const split = doc.splitTextToSize(
+        paymentSettings.paymentInstructions,
+        pageWidth - 40
+      );
+      blockHeight += 4 + split.length * 4.5;
+    }
+    ensureSpace(blockHeight);
+
     doc.setFillColor(...lightGray);
     doc.rect(15, yPos - 6, pageWidth - 30, 10, 'F');
     doc.setFontSize(10);
@@ -315,8 +341,12 @@ function buildInvoicePDF(params: {
     }
   }
 
-  // ===== Footer =====
-  const footerY = pageHeight - 25;
+  // ===== Footer (always below content, never overlapping) =====
+  // If content is too close to the fixed footer zone, move footer lower
+  // (or onto the current content flow) so it never overlaps.
+  const contentBottom = yPos + 10;
+  const minFooterY = pageHeight - 25;
+  const footerY = Math.max(minFooterY, contentBottom);
   doc.setDrawColor(200, 200, 200);
   doc.line(20, footerY, pageWidth - 20, footerY);
 
