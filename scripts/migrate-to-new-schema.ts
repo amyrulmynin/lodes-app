@@ -12,9 +12,18 @@ async function migrate() {
     await db.execute(sql`DROP TABLE IF EXISTS withdrawals CASCADE`);
     console.log("Dropped withdrawals table");
 
-    // Rename affiliate columns to agent in orders table
-    await db.execute(sql`ALTER TABLE orders RENAME COLUMN affiliate_id TO agent_id`);
-    console.log("Renamed orders.affiliate_id to agent_id");
+    // Check if affiliate_id exists before renaming
+    const ordersCols = await db.execute(sql`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'orders' AND column_name = 'affiliate_id'
+    `);
+    
+    if (ordersCols.rows.length > 0) {
+      await db.execute(sql`ALTER TABLE orders RENAME COLUMN affiliate_id TO agent_id`);
+      console.log("Renamed orders.affiliate_id to agent_id");
+    } else {
+      console.log("orders.agent_id already exists, skipping rename");
+    }
 
     // Drop commission columns from orders
     await db.execute(sql`ALTER TABLE orders DROP COLUMN IF EXISTS commission_amount`);
@@ -29,27 +38,34 @@ async function migrate() {
     console.log("Dropped users.commission_balance");
 
     // Update role enum - remove affiliate, keep only admin
-    // Note: PostgreSQL doesn't support removing enum values directly
-    // We'll create a new enum and migrate
-    await db.execute(sql`
-      DO $$
-      BEGIN
-        -- Check if new enum exists
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role_new') THEN
-          CREATE TYPE role_new AS ENUM ('admin');
-        END IF;
-      END
-      $$;
-    `);
-    console.log("Created new role enum");
+    // First, update all rows to 'admin' (since we're removing affiliate)
+    await db.execute(sql`UPDATE users SET role = 'admin' WHERE role = 'affiliate'`);
+    console.log("Updated affiliate users to admin");
 
-    // Update users table to use new enum
+    // Check if we need to create new enum
+    const enumExists = await db.execute(sql`
+      SELECT 1 FROM pg_type WHERE typname = 'role_new'
+    `);
+    
+    if (enumExists.rows.length === 0) {
+      await db.execute(sql`CREATE TYPE role_new AS ENUM ('admin')`);
+      console.log("Created new role enum");
+    }
+
+    // Drop default temporarily
+    await db.execute(sql`ALTER TABLE users ALTER COLUMN role DROP DEFAULT`);
+    
+    // Change column type
     await db.execute(sql`
       ALTER TABLE users 
       ALTER COLUMN role TYPE role_new 
-      USING (CASE WHEN role = 'admin' THEN 'admin'::role_new ELSE 'admin'::role_new END)
+      USING (role::text::role_new)
     `);
     console.log("Updated users.role to new enum");
+
+    // Set new default
+    await db.execute(sql`ALTER TABLE users ALTER COLUMN role SET DEFAULT 'admin'::role_new`);
+    console.log("Set new default for role");
 
     // Drop old enum and rename new one
     await db.execute(sql`DROP TYPE IF EXISTS role CASCADE`);
@@ -57,8 +73,17 @@ async function migrate() {
     console.log("Replaced role enum");
 
     // Update reviews table
-    await db.execute(sql`ALTER TABLE reviews RENAME COLUMN affiliate_id TO agent_id`);
-    console.log("Renamed reviews.affiliate_id to agent_id");
+    const reviewsCols = await db.execute(sql`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'reviews' AND column_name = 'affiliate_id'
+    `);
+    
+    if (reviewsCols.rows.length > 0) {
+      await db.execute(sql`ALTER TABLE reviews RENAME COLUMN affiliate_id TO agent_id`);
+      console.log("Renamed reviews.affiliate_id to agent_id");
+    } else {
+      console.log("reviews.agent_id already exists, skipping rename");
+    }
 
     // Create new tables
     await db.execute(sql`
