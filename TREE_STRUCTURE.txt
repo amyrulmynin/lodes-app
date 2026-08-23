@@ -1,0 +1,108 @@
+🍰 LODES APP - PROJECT STRUCTURE
+================================
+
+lodes-app/
+│
+├── 📚 DOCUMENTATION (Start Here!)
+│   ├── START_HERE.md ⭐                # 👈 READ THIS FIRST!
+│   ├── INDEX.md                        # Documentation navigation
+│   ├── QUICK_START.md                  # 5-minute setup guide
+│   ├── INSTALLATION_CHECKLIST.md       # Step-by-step checklist
+│   ├── README.md                       # Project overview
+│   ├── SETUP.md                        # Detailed configuration
+│   ├── DEPLOYMENT_GUIDE.md             # Vercel deployment
+│   ├── PROJECT_SUMMARY.md              # Technical reference
+│   └── TREE_STRUCTURE.txt              # This file
+│
+├── 📱 APPLICATION CODE
+│   │
+│   ├── app/                            # Next.js App Router
+│   │   ├── admin/
+│   │   │   └── page.tsx                # Admin dashboard page
+│   │   ├── affiliate/
+│   │   │   └── page.tsx                # Affiliate dashboard page
+│   │   ├── login/
+│   │   │   └── page.tsx                # Login page
+│   │   ├── api/                        # API Routes
+│   │   │   ├── auth/[...nextauth]/
+│   │   │   │   └── route.ts            # NextAuth endpoint
+│   │   │   ├── desserts/
+│   │   │   │   ├── route.ts            # GET/POST desserts
+│   │   │   │   └── [id]/route.ts       # PUT/DELETE dessert
+│   │   │   ├── orders/
+│   │   │   │   ├── route.ts            # GET/POST orders
+│   │   │   │   └── [id]/route.ts       # PATCH order status
+│   │   │   ├── withdrawals/
+│   │   │   │   ├── route.ts            # GET/POST withdrawals
+│   │   │   │   └── [id]/route.ts       # PATCH withdrawal
+│   │   │   └── profile/
+│   │   │       └── route.ts            # GET/PUT profile
+│   │   ├── layout.tsx                  # Root layout
+│   │   ├── page.tsx                    # Home (redirects)
+│   │   └── globals.css                 # Global styles
+│   │
+│   ├── components/                     # React Components
+│   │   ├── admin/
+│   │   │   ├── dashboard.tsx           # Admin main dashboard
+│   │   │   ├── desserts-manager.tsx    # Manage desserts
+│   │   │   ├── orders-manager.tsx      # Manage orders
+│   │   │   └── withdrawals-manager.tsx # Manage withdrawals
+│   │   ├── affiliate/
+│   │   │   ├── dashboard.tsx           # Affiliate main dashboard
+│   │   │   ├── submit-order.tsx        # Submit new order
+│   │   │   ├── orders-list.tsx         # View orders
+│   │   │   ├── commission-balance.tsx  # View balance
+│   │   │   └── withdrawals-list.tsx    # Withdrawal requests
+│   │   ├── ui/                         # Reusable UI components
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── input.tsx
+│   │   │   └── tabs.tsx
+│   │   └── navbar.tsx                  # Navigation bar
+│   │
+│   ├── db/                             # Database
+│   │   ├── schema.ts                   # Drizzle schema (tables)
+│   │   └── index.ts                    # Database connection
+│   │
+│   ├── lib/                            # Utilities & Config
+│   │   ├── auth.ts                     # NextAuth configuration
+│   │   ├── utils.ts                    # Helper functions
+│   │   └── integrations/
+│   │       ├── whatsapp.ts             # WhatsApp API
+│   │       └── google-sheets.ts        # Google Sheets API
+│   │
+│   ├── scripts/
+│   │   └── seed.ts                     # Database seeding script
+│   │
+│   └── types/
+│       └── next-auth.d.ts              # TypeScript types
+│
+├── ⚙️ CONFIGURATION FILES
+│   ├── .env.example                    # Environment template
+│   ├── .gitignore                      # Git ignore rules
+│   ├── .eslintrc.json                  # ESLint config
+│   ├── drizzle.config.ts               # Drizzle ORM config
+│   ├── middleware.ts                   # Next.js middleware
+│   ├── next.config.mjs                 # Next.js config
+│   ├── package.json                    # Dependencies
+│   ├── postcss.config.mjs              # PostCSS config
+│   ├── tailwind.config.ts              # Tailwind config
+│   ├── tsconfig.json                   # TypeScript config
+│   └── vercel.json                     # Vercel deployment
+│
+└── 📦 AUTO-GENERATED (Don't edit)
+    ├── node_modules/                   # Dependencies
+    ├── .next/                          # Next.js build
+    └── drizzle/                        # Database migrations
+
+TOTAL FILES: 52+ files
+DOCUMENTATION: 8 markdown guides
+PAGES: 13 routes (app + api)
+COMPONENTS: 14 reusable components
+
+═══════════════════════════════════════
+📖 GETTING STARTED:
+   1. Read START_HERE.md
+   2. Follow QUICK_START.md
+   3. Deploy with DEPLOYMENT_GUIDE.md
+═══════════════════════════════════════
