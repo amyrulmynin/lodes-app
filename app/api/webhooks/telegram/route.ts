@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { ingredients, stockMovements } from "@/db/schema";
+import { ingredients, stockMovements, paymentSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getIntegration, type TelegramConfig } from "@/lib/integrations/config";
 import { analyseImage } from "@/lib/integrations/ai";
+import {
+  getInvoiceState,
+  setInvoiceState,
+  clearInvoiceState,
+  isInvoiceActive,
+  type InvoiceItem,
+  type InvoiceState,
+} from "@/lib/telegram-invoice-state";
+import { getNextInvoiceNumber } from "@/lib/telegram-invoice-counter";
+import { generateTelegramInvoicePDF } from "@/lib/telegram-invoice-pdf";
 
 // ============================================================
 // Telegram webhook - receive receipt photos, AI reads them,
@@ -17,6 +27,15 @@ const E = {
   scan: "\u{1F50D}",
   hourglass: "\u23F3",
   warn: "\u26A0\uFE0F",
+  memo: "\u{1F4DD}",
+  person: "\u{1F464}",
+  phone: "\u{1F4DE}",
+  home: "\u{1F3E0}",
+  cart: "\u{1F6D2}",
+  money: "\u{1F4B0}",
+  note: "\u{1F4DD}",
+  star: "\u2B50",
+  invoice: "\u{1F9FE}",
 };
 
 async function tgSend(botToken: string, chatId: string | number, text: string) {
@@ -24,6 +43,27 @@ async function tgSend(botToken: string, chatId: string | number, text: string) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
+  }).catch(() => {});
+}
+
+async function tgSendDocument(
+  botToken: string,
+  chatId: string | number,
+  document: Buffer,
+  filename: string,
+  caption?: string
+) {
+  const formData = new FormData();
+  formData.append("chat_id", String(chatId));
+  formData.append("document", new Blob([new Uint8Array(document)], { type: "application/pdf" }), filename);
+  if (caption) {
+    formData.append("caption", caption);
+    formData.append("parse_mode", "HTML");
+  }
+
+  await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+    method: "POST",
+    body: formData,
   }).catch(() => {});
 }
 
@@ -166,7 +206,12 @@ Peraturan: quantity nombor; price dalam RM; unit guna "kg","g","L","ml", atau "p
       await tgSend(
         cfg.botToken,
         chatId,
-        `${E.package} <b>Lodes Bot</b>\n\nHantar gambar resit pembelian bahan dan saya akan masukkan ke stok secara automatik.\n\nArahan:\n/stok - lihat baki stok`
+        `${E.package} <b>Lodes Bot</b>\n\n` +
+          `Hantar gambar resit pembelian bahan dan saya akan masukkan ke stok secara automatik.\n\n` +
+          `Arahan:\n` +
+          `/stok - lihat baki stok\n` +
+          `/invoice - buat invoice manual (PDF)\n` +
+          `/batal - batalkan invoice yang sedang dibuat`
       );
       return NextResponse.json({ ok: true });
     }
@@ -187,9 +232,311 @@ Peraturan: quantity nombor; price dalam RM; unit guna "kg","g","L","ml", atau "p
       return NextResponse.json({ ok: true });
     }
 
+    // --- /invoice command ---
+    if (message.text === "/invoice" || message.text === "/inv") {
+      if (await isInvoiceActive(String(chatId))) {
+        await tgSend(
+          cfg.botToken,
+          chatId,
+          `${E.warn} Anda sedang membuat invoice. Taip /batal untuk mula semula.`
+        );
+        return NextResponse.json({ ok: true });
+      }
+
+      const invoiceNumber = getNextInvoiceNumber();
+      await setInvoiceState(String(chatId), {
+        step: "awaiting_name",
+        invoiceNumber,
+      });
+
+      await tgSend(
+        cfg.botToken,
+        chatId,
+        `${E.invoice} <b>Buat Invoice Manual</b>\n\n` +
+          `No. Invoice: <b>${invoiceNumber}</b>\n\n` +
+          `${E.person} Sila masukkan <b>nama pelanggan</b>:`
+      );
+      return NextResponse.json({ ok: true });
+    }
+
+    // --- /batal command ---
+    if (message.text === "/batal" || message.text === "/cancel") {
+      if (await isInvoiceActive(String(chatId))) {
+        await clearInvoiceState(String(chatId));
+        await tgSend(cfg.botToken, chatId, `${E.check} Invoice dibatalkan.`);
+      } else {
+        await tgSend(cfg.botToken, chatId, `${E.warn} Tiada invoice sedang dibuat.`);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // --- Handle invoice conversation steps ---
+    const state = await getInvoiceState(String(chatId));
+    if (state && state.step !== "idle" && state.step !== "done") {
+      await handleInvoiceStep(cfg.botToken, chatId, message.text || "", state);
+      return NextResponse.json({ ok: true });
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Telegram webhook error:", error);
     return NextResponse.json({ ok: true });
+  }
+}
+
+// ============================================================
+// Invoice conversation step handler
+// ============================================================
+
+async function handleInvoiceStep(
+  botToken: string,
+  chatId: string | number,
+  text: string,
+  state: InvoiceState
+) {
+  if (!state) return;
+  const input = text.trim();
+
+  switch (state.step) {
+    case "awaiting_name": {
+      if (!input) {
+        await tgSend(botToken, chatId, `${E.cross} Nama tidak boleh kosong. Sila masukkan nama pelanggan:`);
+        return;
+      }
+      await setInvoiceState(String(chatId), {
+        customerName: input,
+        step: "awaiting_phone",
+      });
+      await tgSend(
+        botToken,
+        chatId,
+        `${E.check} Nama: <b>${input}</b>\n\n${E.phone} Masukkan <b>no. telefon pelanggan</b>:`
+      );
+      break;
+    }
+
+    case "awaiting_phone": {
+      if (!input) {
+        await tgSend(botToken, chatId, `${E.cross} No. telefon tidak boleh kosong. Sila masukkan no. telefon:`);
+        return;
+      }
+      await setInvoiceState(String(chatId), {
+        customerPhone: input,
+        step: "awaiting_address",
+      });
+      await tgSend(
+        botToken,
+        chatId,
+        `${E.check} Telefon: <b>${input}</b>\n\n${E.home} Masukkan <b>alamat pelanggan</b> (taip <b>-</b> jika tiada):`
+      );
+      break;
+    }
+
+    case "awaiting_address": {
+      const address = input === "-" ? "" : input;
+      await setInvoiceState(String(chatId), {
+        customerAddress: address,
+        step: "awaiting_item_name",
+      });
+      await tgSend(
+        botToken,
+        chatId,
+        `${E.check} Alamat: ${address ? `<b>${address}</b>` : "<i>(tiada)</i>"}\n\n` +
+          `${E.cart} Masukkan <b>nama item pertama</b>:`
+      );
+      break;
+    }
+
+    case "awaiting_item_name": {
+      if (!input) {
+        await tgSend(botToken, chatId, `${E.cross} Nama item tidak boleh kosong. Sila masukkan nama item:`);
+        return;
+      }
+      await setInvoiceState(String(chatId), {
+        currentItem: { name: input },
+        step: "awaiting_item_price",
+      });
+      await tgSend(
+        botToken,
+        chatId,
+        `${E.check} Item: <b>${input}</b>\n\n${E.money} Masukkan <b>harga unit (RM)</b> untuk "${input}":`
+      );
+      break;
+    }
+
+    case "awaiting_item_price": {
+      const price = parseFloat(input);
+      if (isNaN(price) || price <= 0) {
+        await tgSend(
+          botToken,
+          chatId,
+          `${E.cross} Harga tidak sah. Masukkan nombor sahaja (contoh: 10.50):`
+        );
+        return;
+      }
+      await setInvoiceState(String(chatId), {
+        currentItem: { ...state.currentItem, price },
+        step: "awaiting_item_quantity",
+      });
+      await tgSend(
+        botToken,
+        chatId,
+        `${E.check} Harga: <b>RM ${price.toFixed(2)}</b>\n\n${E.package} Masukkan <b>kuantiti</b> untuk "${state.currentItem.name}":`
+      );
+      break;
+    }
+
+    case "awaiting_item_quantity": {
+      const qty = parseInt(input);
+      if (isNaN(qty) || qty <= 0) {
+        await tgSend(
+          botToken,
+          chatId,
+          `${E.cross} Kuantiti tidak sah. Masukkan nombor bulat sahaja (contoh: 2):`
+        );
+        return;
+      }
+
+      const newItem: InvoiceItem = {
+        name: state.currentItem.name!,
+        price: state.currentItem.price!,
+        quantity: qty,
+      };
+
+      const updatedItems = [...state.items, newItem];
+      const runningTotal = updatedItems.reduce((s, i) => s + i.price * i.quantity, 0);
+
+      await setInvoiceState(String(chatId), {
+        items: updatedItems,
+        currentItem: {},
+        step: "awaiting_more_items",
+      });
+
+      const itemList = updatedItems
+        .map((i, idx) => `${idx + 1}. ${i.name} x${i.quantity} @ RM ${i.price.toFixed(2)} = RM ${(i.price * i.quantity).toFixed(2)}`)
+        .join("\n");
+
+      await tgSend(
+        botToken,
+        chatId,
+        `${E.check} Item ditambah!\n\n${E.cart} <b>Senarai Item:</b>\n${itemList}\n\n` +
+          `${E.money} Jumlah sementara: <b>RM ${runningTotal.toFixed(2)}</b>\n\n` +
+          `Tambah item lagi? Taip <b>nama item baru</b> atau taip <b>selesai</b> untuk teruskan.`
+      );
+      break;
+    }
+
+    case "awaiting_more_items": {
+      if (input.toLowerCase() === "selesai" || input.toLowerCase() === "done" || input.toLowerCase() === "siap") {
+        await setInvoiceState(String(chatId), { step: "awaiting_notes" });
+        await tgSend(
+          botToken,
+          chatId,
+          `${E.note} Masukkan <b>nota tambahan</b> (contoh: penghantaran Sabtu, bayaran tunai).\nTaip <b>-</b> jika tiada nota:`
+        );
+      } else {
+        // User is adding another item - treat input as item name
+        await setInvoiceState(String(chatId), {
+          currentItem: { name: input },
+          step: "awaiting_item_price",
+        });
+        await tgSend(
+          botToken,
+          chatId,
+          `${E.cart} Item baru: <b>${input}</b>\n\n${E.money} Masukkan <b>harga unit (RM)</b>:`
+        );
+      }
+      break;
+    }
+
+    case "awaiting_notes": {
+      const notes = input === "-" ? "" : input;
+      await setInvoiceState(String(chatId), {
+        notes,
+        step: "awaiting_status",
+      });
+      await tgSend(
+        botToken,
+        chatId,
+        `${E.check} Nota: ${notes ? `<b>${notes}</b>` : "<i>(tiada)</i>"}\n\n` +
+          `${E.star} Pilih <b>status invoice</b>:\n` +
+          `1 - DISAHKAN (default)\n` +
+          `2 - DIBAYAR\n` +
+          `3 - MENUNGGU PENGESAHAN\n\n` +
+          `Taip <b>1</b>, <b>2</b>, atau <b>3</b>:`
+      );
+      break;
+    }
+
+    case "awaiting_status": {
+      let status: "accepted" | "paid" | "pending" = "accepted";
+      if (input === "2") status = "paid";
+      else if (input === "3") status = "pending";
+
+      await setInvoiceState(String(chatId), { status, step: "done" });
+
+      // Generate and send PDF
+      await tgSend(botToken, chatId, `${E.hourglass} Menjana invoice PDF...`);
+
+      try {
+        // Load payment settings from DB
+        let paymentSettingsData: any = null;
+        try {
+          const rows = await db.query.paymentSettings.findMany();
+          if (rows.length > 0) {
+            const row = rows[0];
+            paymentSettingsData = {
+              bankName: row.bankName,
+              accountNumber: row.accountNumber,
+              accountHolder: row.accountHolder,
+              paymentInstructions: row.paymentInstructions,
+            };
+          }
+        } catch (e) {
+          console.error("Failed to load payment settings:", e);
+        }
+
+        const pdfBuffer = generateTelegramInvoicePDF({
+          invoiceNumber: state.invoiceNumber,
+          invoiceDate: new Date(),
+          customerName: state.customerName,
+          customerPhone: state.customerPhone,
+          customerAddress: state.customerAddress || undefined,
+          items: state.items,
+          notes: state.notes || undefined,
+          status,
+          paymentSettings: paymentSettingsData,
+        });
+
+        const total = state.items.reduce((s, i) => s + i.price * i.quantity, 0);
+        const fileName = `Invoice_${state.invoiceNumber}_${state.customerName.replace(/\s+/g, "_")}.pdf`;
+
+        await tgSendDocument(
+          botToken,
+          chatId,
+          pdfBuffer,
+          fileName,
+          `${E.invoice} <b>Invoice ${state.invoiceNumber}</b>\n` +
+            `${E.person} ${state.customerName}\n` +
+            `${E.money} Jumlah: RM ${total.toFixed(2)}\n` +
+            `${E.star} Status: ${status === "accepted" ? "DISAHKAN" : status === "paid" ? "DIBAYAR" : "MENUNGGU PENGESAHAN"}`
+        );
+
+        await clearInvoiceState(String(chatId));
+      } catch (error) {
+        console.error("Invoice generation error:", error);
+        await tgSend(
+          botToken,
+          chatId,
+          `${E.cross} Gagal menjana invoice. Sila cuba lagi dengan /invoice.`
+        );
+        await clearInvoiceState(String(chatId));
+      }
+      break;
+    }
+
+    default:
+      await clearInvoiceState(String(chatId));
+      await tgSend(botToken, chatId, `${E.warn} Sesi invoice tamat. Taip /invoice untuk mula semula.`);
   }
 }

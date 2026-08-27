@@ -208,3 +208,19 @@ export const deliveryLocations = sqliteTable("delivery_locations", {
   accuracy: text("accuracy"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
+
+export const telegramInvoiceStates = sqliteTable("telegram_invoice_states", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  chatId: text("chat_id").notNull().unique(),
+  step: text("step").notNull().default("idle"),
+  customerName: text("customer_name"),
+  customerPhone: text("customer_phone"),
+  customerAddress: text("customer_address"),
+  items: text("items").notNull().default("[]"),
+  currentItem: text("current_item"),
+  notes: text("notes"),
+  status: text("status").notNull().default("accepted"),
+  invoiceNumber: text("invoice_number").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});

@@ -10,6 +10,7 @@ next-env.d.ts
 sqlite.db
 *.db
 *.db-journal
+.telegram-invoice-counter.json
 .vercel
 *.pem
 npm-debug.log*

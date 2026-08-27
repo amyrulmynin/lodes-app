@@ -284,3 +284,19 @@ export const deliveryLocations = pgTable("delivery_locations", {
   accuracy: decimal("accuracy", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const telegramInvoiceStates = pgTable("telegram_invoice_states", {
+  id: serial("id").primaryKey(),
+  chatId: text("chat_id").notNull().unique(),
+  step: text("step").notNull().default("idle"),
+  customerName: text("customer_name"),
+  customerPhone: text("customer_phone"),
+  customerAddress: text("customer_address"),
+  items: text("items").notNull().default("[]"),
+  currentItem: text("current_item"),
+  notes: text("notes"),
+  status: text("status").notNull().default("accepted"),
+  invoiceNumber: text("invoice_number").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
