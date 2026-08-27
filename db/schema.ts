@@ -297,6 +297,7 @@ export const telegramInvoiceStates = pgTable("telegram_invoice_states", {
   notes: text("notes"),
   status: text("status").notNull().default("accepted"),
   invoiceNumber: text("invoice_number").notNull(),
+  invoiceDate: text("invoice_date"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

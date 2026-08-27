@@ -221,6 +221,7 @@ export const telegramInvoiceStates = sqliteTable("telegram_invoice_states", {
   notes: text("notes"),
   status: text("status").notNull().default("accepted"),
   invoiceNumber: text("invoice_number").notNull(),
+  invoiceDate: text("invoice_date"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });

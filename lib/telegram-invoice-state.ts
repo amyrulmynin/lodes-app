@@ -17,6 +17,7 @@ export interface InvoiceState {
   step:
     | "idle"
     | "awaiting_name"
+    | "awaiting_date"
     | "awaiting_phone"
     | "awaiting_address"
     | "awaiting_item_name"
@@ -34,6 +35,7 @@ export interface InvoiceState {
   notes: string;
   status: "accepted" | "paid" | "pending";
   invoiceNumber: string;
+  invoiceDate: string; // DD/MM/YYYY format
 }
 
 const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
@@ -65,6 +67,7 @@ function dbToState(row: DbState): InvoiceState {
     notes: row.notes || "",
     status: (row.status as InvoiceState["status"]) || "accepted",
     invoiceNumber: row.invoiceNumber,
+    invoiceDate: (row as any).invoiceDate || "",
   };
 }
 
@@ -100,19 +103,20 @@ export async function setInvoiceState(
     });
 
     const now = new Date();
-    const baseState: InvoiceState = existing
-      ? dbToState(existing as DbState)
-      : {
-          step: "idle",
-          customerName: "",
-          customerPhone: "",
-          customerAddress: "",
-          items: [],
-          currentItem: {},
-          notes: "",
-          status: "accepted",
-          invoiceNumber: "",
-        };
+      const baseState: InvoiceState = existing
+        ? dbToState(existing as DbState)
+        : {
+            step: "idle",
+            customerName: "",
+            customerPhone: "",
+            customerAddress: "",
+            items: [],
+            currentItem: {},
+            notes: "",
+            status: "accepted",
+            invoiceNumber: "",
+            invoiceDate: "",
+          };
 
     const merged: InvoiceState = { ...baseState, ...state };
 
@@ -129,8 +133,9 @@ export async function setInvoiceState(
           notes: merged.notes || null,
           status: merged.status,
           invoiceNumber: merged.invoiceNumber,
+          invoiceDate: merged.invoiceDate || null,
           updatedAt: now,
-        })
+        } as any)
         .where(eq(telegramInvoiceStates.chatId, chatId));
     } else {
       await db.insert(telegramInvoiceStates).values({
@@ -144,9 +149,10 @@ export async function setInvoiceState(
         notes: merged.notes || null,
         status: merged.status,
         invoiceNumber: merged.invoiceNumber,
+        invoiceDate: merged.invoiceDate || null,
         createdAt: now,
         updatedAt: now,
-      });
+      } as any);
     }
 
     return merged;

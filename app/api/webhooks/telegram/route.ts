@@ -335,12 +335,51 @@ async function handleInvoiceStep(
       }
       await setInvoiceState(String(chatId), {
         customerName: input,
+        step: "awaiting_date",
+      });
+      await tgSend(
+        botToken,
+        chatId,
+        `${E.check} Nama: <b>${input}</b>\n\n${E.memo} Masukkan <b>tarikh invoice</b> (format: DD/MM/YYYY, contoh: 27/08/2026):`
+      );
+      break;
+    }
+
+    case "awaiting_date": {
+      if (!input) {
+        await tgSend(botToken, chatId, `${E.cross} Tarikh tidak boleh kosong. Sila masukkan tarikh (DD/MM/YYYY):`);
+        return;
+      }
+      // Validate DD/MM/YYYY format
+      const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+      const match = input.match(dateRegex);
+      if (!match) {
+        await tgSend(
+          botToken,
+          chatId,
+          `${E.cross} Format tarikh tidak sah. Guna format DD/MM/YYYY (contoh: 27/08/2026):`
+        );
+        return;
+      }
+      const day = parseInt(match[1]);
+      const month = parseInt(match[2]);
+      const year = parseInt(match[3]);
+      if (day < 1 || day > 31 || month < 1 || month > 12 || year < 2000 || year > 2100) {
+        await tgSend(
+          botToken,
+          chatId,
+          `${E.cross} Tarikh tidak sah. Sila masukkan tarikh yang betul (DD/MM/YYYY):`
+        );
+        return;
+      }
+      await setInvoiceState(String(chatId), {
+        invoiceDate: input,
         step: "awaiting_phone",
       });
       await tgSend(
         botToken,
         chatId,
-        `${E.check} Nama: <b>${input}</b>\n\n${E.phone} Masukkan <b>no. telefon pelanggan</b>:`
+        `${E.check} Tarikh: <b>${input}</b>\n\n${E.phone} Masukkan <b>no. telefon pelanggan</b>:`
       );
       break;
     }
@@ -526,9 +565,16 @@ async function handleInvoiceStep(
           console.error("Failed to load payment settings:", e);
         }
 
+        // Parse invoice date from DD/MM/YYYY
+        let invoiceDate = new Date();
+        if (state.invoiceDate) {
+          const [day, month, year] = state.invoiceDate.split("/").map(Number);
+          invoiceDate = new Date(year, month - 1, day);
+        }
+
         const pdfBuffer = generateTelegramInvoicePDF({
           invoiceNumber: state.invoiceNumber,
-          invoiceDate: new Date(),
+          invoiceDate,
           customerName: state.customerName,
           customerPhone: state.customerPhone,
           customerAddress: state.customerAddress || undefined,
