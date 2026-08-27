@@ -101,20 +101,31 @@ function matchIngredient(name: string, all: { id: number; name: string }[]) {
 }
 
 export async function POST(request: NextRequest) {
+  console.log("[Telegram Webhook] Received request");
   try {
     const cfg = await getIntegration<TelegramConfig>("telegram");
+    console.log("[Telegram Webhook] Config loaded:", { isEnabled: cfg?.isEnabled, hasToken: !!cfg?.botToken, chatId: cfg?.chatId });
+    
     if (!cfg || !cfg.isEnabled || !cfg.botToken) {
+      console.log("[Telegram Webhook] Bot not configured or disabled");
       return NextResponse.json({ ok: true }); // ignore silently
     }
 
     const update = await request.json();
+    console.log("[Telegram Webhook] Update received:", JSON.stringify(update).slice(0, 500));
+    
     const message = update.message || update.channel_post;
-    if (!message) return NextResponse.json({ ok: true });
+    if (!message) {
+      console.log("[Telegram Webhook] No message in update");
+      return NextResponse.json({ ok: true });
+    }
 
     const chatId = message.chat?.id;
+    console.log("[Telegram Webhook] Chat ID:", chatId, "Text:", message.text);
 
     // Security: only respond to the configured admin chat
     if (cfg.chatId && String(chatId) !== String(cfg.chatId)) {
+      console.log("[Telegram Webhook] Chat ID mismatch, ignoring");
       return NextResponse.json({ ok: true });
     }
 
@@ -234,29 +245,43 @@ Peraturan: quantity nombor; price dalam RM; unit guna "kg","g","L","ml", atau "p
 
     // --- /invoice command ---
     if (message.text === "/invoice" || message.text === "/inv") {
-      if (await isInvoiceActive(String(chatId))) {
+      console.log("[Telegram Webhook] /invoice command received");
+      try {
+        if (await isInvoiceActive(String(chatId))) {
+          console.log("[Telegram Webhook] Invoice already active");
+          await tgSend(
+            cfg.botToken,
+            chatId,
+            `${E.warn} Anda sedang membuat invoice. Taip /batal untuk mula semula.`
+          );
+          return NextResponse.json({ ok: true });
+        }
+
+        console.log("[Telegram Webhook] Getting next invoice number...");
+        const invoiceNumber = getNextInvoiceNumber();
+        console.log("[Telegram Webhook] Invoice number:", invoiceNumber);
+        
+        console.log("[Telegram Webhook] Setting invoice state...");
+        await setInvoiceState(String(chatId), {
+          step: "awaiting_name",
+          invoiceNumber,
+        });
+        console.log("[Telegram Webhook] State set successfully");
+
         await tgSend(
           cfg.botToken,
           chatId,
-          `${E.warn} Anda sedang membuat invoice. Taip /batal untuk mula semula.`
+          `${E.invoice} <b>Buat Invoice Manual</b>\n\n` +
+            `No. Invoice: <b>${invoiceNumber}</b>\n\n` +
+            `${E.person} Sila masukkan <b>nama pelanggan</b>:`
         );
+        console.log("[Telegram Webhook] Response sent");
+        return NextResponse.json({ ok: true });
+      } catch (invoiceError) {
+        console.error("[Telegram Webhook] Invoice error:", invoiceError);
+        await tgSend(cfg.botToken, chatId, `${E.cross} Ralat: ${String(invoiceError)}`);
         return NextResponse.json({ ok: true });
       }
-
-      const invoiceNumber = getNextInvoiceNumber();
-      await setInvoiceState(String(chatId), {
-        step: "awaiting_name",
-        invoiceNumber,
-      });
-
-      await tgSend(
-        cfg.botToken,
-        chatId,
-        `${E.invoice} <b>Buat Invoice Manual</b>\n\n` +
-          `No. Invoice: <b>${invoiceNumber}</b>\n\n` +
-          `${E.person} Sila masukkan <b>nama pelanggan</b>:`
-      );
-      return NextResponse.json({ ok: true });
     }
 
     // --- /batal command ---
@@ -271,10 +296,15 @@ Peraturan: quantity nombor; price dalam RM; unit guna "kg","g","L","ml", atau "p
     }
 
     // --- Handle invoice conversation steps ---
-    const state = await getInvoiceState(String(chatId));
-    if (state && state.step !== "idle" && state.step !== "done") {
-      await handleInvoiceStep(cfg.botToken, chatId, message.text || "", state);
-      return NextResponse.json({ ok: true });
+    try {
+      const state = await getInvoiceState(String(chatId));
+      console.log("[Telegram Webhook] Current state:", state?.step);
+      if (state && state.step !== "idle" && state.step !== "done") {
+        await handleInvoiceStep(cfg.botToken, chatId, message.text || "", state);
+        return NextResponse.json({ ok: true });
+      }
+    } catch (stateError) {
+      console.error("[Telegram Webhook] State error:", stateError);
     }
 
     return NextResponse.json({ ok: true });
